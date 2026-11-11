@@ -44,6 +44,25 @@ Components should support keyboard navigation, accessible labels, useful focus s
 
 Design for desktop, tablet and mobile. **Light mode first**; dark mode is a possible later enhancement. Use semantic tokens so themes can be added without rewriting component styles.
 
+## Frontend Design Inspiration & Animations
+
+Use the following websites as inspiration for modern, polished SaaS frontend experiences:
+
+- **Mixpanel:** https://mixpanel.com/home/
+- **Superwall:** https://superwall.com/solutions/agencies
+
+Use these as quality references, not designs to copy. Maintain UseLotuz's original branding and design tokens.
+
+### Design Guidelines
+
+- Clean, premium layouts with excellent typography, spacing, and subtle gradients.
+- Smooth scroll-triggered animations, transitions, and hover effects.
+- Modern product showcases, interactive cards, and engaging hero sections.
+- Use CSS transitions or Motion for React for simple animations; GSAP only when advanced animations are necessary.
+- Keep animations subtle, performant, accessible, and respectful of reduced-motion preferences.
+- Prioritize visual polish on marketing pages and speed, clarity, and productivity in SaaS dashboards.
+- Avoid unnecessary dependencies, excessive animations, and generic-looking interfaces.
+
 ## Design review checklist
 
 Check token use, consistency with shared components, readability/contrast, responsive behavior, keyboard interaction, loading/empty/error states and consistency with existing product screens.
