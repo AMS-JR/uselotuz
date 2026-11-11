@@ -1,4 +1,4 @@
-# UseLotuz — Coding Standards
+# Lotuz — Coding Standards
 
 ## 1. General approach
 

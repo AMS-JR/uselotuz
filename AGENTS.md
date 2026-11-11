@@ -1,4 +1,10 @@
-# UseLotuz — Codex and AI Agent Instructions
+# Lotuz — Codex and AI Agent Instructions
+
+## Brand and technical naming
+
+- Customer-facing brand: **Lotuz**. Product names use the **Lotuz** prefix, starting with **Lotuz Inventory**; future examples include Lotuz POS, Lotuz Invoicing and Lotuz CRM. Examples do not authorize scaffolding new products.
+- Main website: `uselotuz.io`; Inventory domain: `inventory.uselotuz.io`. **UseLotuz** identifies the domain/repository, not the customer-facing brand.
+- Preserve technical identifiers such as the `uselotuz` repository, `@uselotuz/*` workspace names, directory paths, domain URLs, Java packages and approved asset filenames. Preserve archived original artwork and source documentation.
 
 ## Before changing code
 

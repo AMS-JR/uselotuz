@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+pnpm-lock.yaml
+next-env.d.ts
+playwright-report
+test-results
+# Existing instruction and product documents are outside this change's formatting scope.
+AGENTS.md
+docs/CODING_STANDARDS.md
+docs/PRODUCT_ROADMAP.md
+# Preserve supplied artwork and byte-identical production copies.
+assets/brand-source/
+apps/web/public/brand/

@@ -1,0 +1,18 @@
+@theme inline {
+  --font-sans: var(--font-geist), Arial, sans-serif;
+}
+
+@theme {
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-foreground: #0f172a;
+  --color-muted-foreground: #64748b;
+  --color-border: #e2e8f0;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-destructive: #dc2626;
+  --radius-control: 8px;
+  --radius-card: 12px;
+}

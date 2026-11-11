@@ -1,22 +1,28 @@
-# UseLotuz — Product Roadmap
+# Lotuz — Product Roadmap
 
 ## Vision and customers
 
-UseLotuz provides focused, independently usable SaaS products for convenience stores, mini-markets, independent grocers, small retailers, independent restaurants, takeout businesses and small cafés. The parent website helps customers discover products; shared accounts and optional integrations can come as the platform develops.
+Lotuz provides focused, independently usable SaaS products for convenience stores, mini-markets, independent grocers, small retailers, independent restaurants, takeout businesses and small cafés. The parent website helps customers discover products; shared accounts and optional integrations can come as the platform develops.
 
 ## Portfolio and status
 
+The main brand is **Lotuz**, with its website at `uselotuz.io`. The first product
+name is **Lotuz Inventory**, with `inventory.uselotuz.io` reserved in the planned
+domain structure. UseLotuz refers to the domain/repository identity. Future names
+such as Lotuz POS, Lotuz Invoicing and Lotuz CRM follow the brand prefix without
+changing the roadmap or authorizing new applications.
+
 | Product | Customer job | Status |
 | --- | --- | --- |
-| UseLotuz main website | Discover and learn about products | First platform deliverable |
-| UseLotuz Inventory | Track stock and plan reorders | **Provisional first MVP candidate** |
-| Restaurant Food Cost & Menu Pricing | Calculate ingredient/recipe cost and prices | Future candidate |
-| Daily Sales & Profit Tracker | Review itemized sales and margins | Future candidate |
-| Supplier Price Tracker | Compare supplier prices | Future |
-| AI Marketing Assistant | Draft promotional content | Future |
-| Social Media Scheduler | Schedule approved posts | Future |
-| Review Reply Helper | Draft responses to reviews | Future |
-| Waste Tracker | Record spoilage and waste | Future |
+| Lotuz main website | Discover and learn about products | First platform deliverable |
+| Lotuz Inventory | Track stock and plan reorders | **Provisional first MVP candidate** |
+| Lotuz Restaurant Food Cost & Menu Pricing | Calculate ingredient/recipe cost and prices | Future candidate |
+| Lotuz Daily Sales & Profit Tracker | Review itemized sales and margins | Future candidate |
+| Lotuz Supplier Price Tracker | Compare supplier prices | Future |
+| Lotuz AI Marketing Assistant | Draft promotional content | Future |
+| Lotuz Social Media Scheduler | Schedule approved posts | Future |
+| Lotuz Review Reply Helper | Draft responses to reviews | Future |
+| Lotuz Waste Tracker | Record spoilage and waste | Future |
 
 **Only one SaaS MVP should be built initially.** The first MVP choice remains subject to customer validation; Inventory is a working candidate, not a proven market decision.
 

@@ -1,29 +1,36 @@
-# UseLotuz — Design System
+# Lotuz — Design System
 
 ## Purpose
 
-Present one recognizable, minimalist and professional UseLotuz brand across the website and independent SaaS frontends. Product workflows may differ; visual foundations should remain consistent. The shared component implementation lives in `packages/ui` when created.
+Present one recognizable, minimalist and professional Lotuz brand across the website and independent SaaS frontends. Product workflows may differ; visual foundations should remain consistent. The shared component implementation lives in `packages/ui`.
 
 ## Brand tokens
 
-| Semantic token | Light-mode value | Usage |
-| --- | --- | --- |
-| Primary | `#2563EB` | Lotus brand blue, primary actions and links |
-| Primary hover | `#1D4ED8` | Interactive hover |
-| Background | `#F8FAFC` | Page background |
-| Surface | `#FFFFFF` | Cards, forms and dialogs |
-| Text primary | `#0F172A` | Main content |
-| Text secondary | `#64748B` | Supporting content |
-| Border | `#E2E8F0` | Dividers and outlines |
-| Success | `#16A34A` | Positive states |
-| Warning | `#D97706` | Caution states |
-| Error | `#DC2626` | Error/destructive states |
+Customer-facing names use **Lotuz** and **Lotuz Inventory**. Future products follow
+the same pattern (for example, Lotuz POS, Lotuz Invoicing and Lotuz CRM).
+UseLotuz is the domain/repository identity; `uselotuz.io` and technical asset names
+stay unchanged. This naming decision does not change the approved lotus artwork,
+Geist typography, color tokens or layouts.
+
+| Semantic token | Light-mode value | Usage                                       |
+| -------------- | ---------------- | ------------------------------------------- |
+| Primary        | `#2563EB`        | Lotus brand blue, primary actions and links |
+| Primary hover  | `#1D4ED8`        | Interactive hover                           |
+| Background     | `#F8FAFC`        | Page background                             |
+| Surface        | `#FFFFFF`        | Cards, forms and dialogs                    |
+| Text primary   | `#0F172A`        | Main content                                |
+| Text secondary | `#64748B`        | Supporting content                          |
+| Border         | `#E2E8F0`        | Dividers and outlines                       |
+| Success        | `#16A34A`        | Positive states                             |
+| Warning        | `#D97706`        | Caution states                              |
+| Error          | `#DC2626`        | Error/destructive states                    |
 
 Implement semantic tokens in the shared theme rather than scattering hex values across components. Check text/control contrast and keyboard focus visibility, especially for status colors.
 
 ## Typography and spacing
 
-- Choose **Inter or Geist** at implementation time and use consistently; choice is still TBD.
+- **Geist** is the approved primary font, self-hosted in the static build through Next.js font tooling.
+- **Comfortaa Regular (400)** is used only for the lowercase `lotuz` header/footer wordmark, self-hosted through Next.js font tooling. All other website typography remains Geist; formal brand and product names remain Lotuz and Lotuz Inventory.
 - Clear heading hierarchy, readable body sizes and line heights; avoid decorative typography.
 - Follow Tailwind's spacing scale with consistent content widths and form spacing.
 - Suggested radius: **8px** for common controls, **12px** for cards; adjust via shared tokens, not per-app overrides.
@@ -36,8 +43,11 @@ Components should support keyboard navigation, accessible labels, useful focus s
 
 ## Brand assets
 
-- Use the approved blue lotus icon for the parent UseLotuz identity, with appropriate clear space and without unnecessary text in icon-only placements.
+- Use the approved blue lotus icon for the parent Lotuz identity, with appropriate clear space and without unnecessary text in icon-only placements.
+- Header and footer branding pair the unchanged lotus SVG at 44px with a 26px lowercase `lotuz` wordmark in Comfortaa Regular (400), no added flex gap and -0.03em letter spacing. Below 640px, use a 40px icon and 22px wordmark with the same zero-gap treatment. Vertically center both so the visible lotus extends slightly above and below the text. The SVG's built-in clear space provides separation so the mark and name read as one unit. Preserve existing header padding/navigation.
+- Approved parent-brand files are organized in `apps/web/public/brand/`. Use the original lotus SVG alongside the Comfortaa wordmark for responsive website branding, the supplied ICO for browser fallback, blue-background PNGs for touch/application icons, and the approved 1200×630 PNG for social sharing. Preserve the artwork's colors, aspect ratio and clear space; do not generate substitutes. See [the asset audit](BRAND_ASSETS.md) for source mappings and unused files.
 - Product icons may extend the lotus visual language while being distinct.
+- Supplied source bundles are archived outside the website at `assets/brand-source/uselotuz/` and `assets/brand-source/inventory/`. Only selected production files belong in `apps/web/public/brand/`; do not publish the source archives or use Inventory artwork for parent-brand placements.
 - Use consistent Lucide icon sizing/strokes for interface actions; avoid emojis as interface icon substitutes.
 
 ## Responsive and themes
@@ -51,7 +61,7 @@ Use the following websites as inspiration for modern, polished SaaS frontend exp
 - **Mixpanel:** https://mixpanel.com/home/
 - **Superwall:** https://superwall.com/solutions/agencies
 
-Use these as quality references, not designs to copy. Maintain UseLotuz's original branding and design tokens.
+Use these as quality references, not designs to copy. Maintain Lotuz's original branding and design tokens.
 
 ### Design Guidelines
 

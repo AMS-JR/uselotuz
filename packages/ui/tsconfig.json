@@ -1,0 +1,4 @@
+{
+  "extends": "@uselotuz/config/typescript.json",
+  "include": ["src/**/*.tsx"]
+}
