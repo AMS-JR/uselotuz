@@ -11,4 +11,10 @@ docs/CODING_STANDARDS.md
 docs/PRODUCT_ROADMAP.md
 # Preserve supplied artwork and byte-identical production copies.
 assets/brand-source/
+backend/target/
+backend/.verify-target/
+.m2/
+.vscode/
 apps/web/public/brand/
+
+.pnpm-store/

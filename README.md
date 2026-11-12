@@ -17,7 +17,10 @@ unchanged; they are not customer-facing brand names.
 
 ## Project status
 
-Early-stage planning and development. The main website is the first platform deliverable; **Inventory is a provisional first SaaS MVP candidate**, subject to customer validation. Do not scaffold or launch the entire portfolio at once.
+The main website is deployed to Cloudflare Pages. Lotuz Inventory is the selected
+first SaaS product, with its Phase 1 platform/access foundation implemented.
+Lotuz is a connected ecosystem under Menes; each product remains independently usable.
+Do not scaffold or launch the entire portfolio at once.
 
 ## Repository
 
@@ -28,8 +31,9 @@ Early-stage planning and development. The main website is the first platform del
 - `docs/` — decisions, design rules, coding conventions and roadmap
 - `assets/brand-source/` — non-public archives of supplied parent and Inventory artwork
 
-The initial workspace contains `apps/web`, `packages/ui`, and `packages/config`.
-Inventory, backend, and infrastructure directories remain deferred until needed.
+The workspace contains `apps/web`, `apps/inventory`, `apps/workspace`, `packages/ui`, and
+`packages/config`, plus a modular Spring Boot `backend` and local PostgreSQL
+configuration in `infra/`. Catalog and stock workflows remain outside Phase 1.
 
 ## Documentation
 
@@ -39,6 +43,8 @@ Inventory, backend, and infrastructure directories remain deferred until needed.
 - [Product roadmap](docs/PRODUCT_ROADMAP.md)
 - [AI development instructions](AGENTS.md)
 - [Deployment settings and release checklist](docs/DEPLOYMENT.md)
+- [Inventory Phase 1 setup, authentication and verification](docs/INVENTORY_PHASE_1.md)
+- [Auth0 and Workspace setup, sessions and manual acceptance](docs/AUTH0_WORKSPACE.md)
 
 ## Development
 
@@ -77,16 +83,27 @@ support ESLint 10. No lint peer-dependency overrides are applied.
 
 ### Workspace boundaries
 
+Use `pnpm dev:inventory` for Inventory on port 3001 and `pnpm build:inventory`
+for its independent build. Use `pnpm dev:workspace`, `pnpm build:workspace`, and
+`pnpm test:workspace` for the independent central Workspace on port 3002.
+Auth0 configuration and the PostgreSQL host port **5433** are documented in
+[Auth0 and Workspace](docs/AUTH0_WORKSPACE.md). `pnpm build` and `pnpm dev` still target only the
+marketing site. Backend commands, required database/OIDC variables and operator
+provisioning are documented in [Inventory Phase 1](docs/INVENTORY_PHASE_1.md).
+
 - `apps/web`: public, static product-discovery site. Inventory is described as
   a proposed product under validation; no Inventory functionality is implemented.
+- `apps/inventory`: independently accessible authenticated Inventory shell.
+- `apps/workspace`: business and product administration; creating a business activates no products. Product activation is operator-approved.
 - `packages/ui`: semantic Tailwind theme and small, server-compatible UI components.
   Add shadcn/ui primitives here when interactive components require them; the
   initial native links and cards do not need a primitive dependency.
 - `packages/config`: strict TypeScript settings shared by web and UI.
 
 Next.js compiles shared UI source directly; no separate package build is needed.
-Tailwind explicitly scans the shared UI source. No environment variables or
-backend services are required. Geist and the wordmark's Comfortaa are downloaded
+Tailwind explicitly scans the shared UI source. The marketing website requires
+no environment variables or backend services. Inventory requires a configured
+backend/database and OIDC provider for authenticated use. Geist and the wordmark's Comfortaa are downloaded
 at build time through `next/font` and served with the static site; the browser
 does not fetch Google Fonts.
 
@@ -108,8 +125,8 @@ Inventory assets are not used by the main site.
 
 The website is configured for Next.js static export, following the
 [Next.js static export guide](https://nextjs.org/docs/app/guides/static-exports).
-No hosting or domain changes have been made. When deployment is separately
-approved, the planned Cloudflare Pages build should run from the repository root
+The marketing website is deployed to Cloudflare Pages; this Phase 1 change makes
+no hosting or domain changes. The Cloudflare Pages build runs from the repository root
 with `pnpm install --frozen-lockfile` and `pnpm build`, publishing `apps/web/out`.
 Use the pinned Node.js and pnpm versions. Keep the canonical, sitemap and sharing
 URLs at `https://uselotuz.io` in both production and previews. See the

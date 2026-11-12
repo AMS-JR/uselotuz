@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: lotuz
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/lotuz}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+server:
+  port: 8080
+  forward-headers-strategy: none
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        name: LOTUZ_SESSION
+        path: /
+        http-only: true
+        secure: ${SESSION_COOKIE_SECURE:true}
+        same-site: lax
+lotuz:
+  api-origin: ${API_ORIGIN:http://localhost:8080}
+  workspace-url: ${WORKSPACE_ORIGIN:http://localhost:3002}
+  frontend-url: ${INVENTORY_ORIGIN:http://localhost:3001}
+  oidc:
+    enabled: ${OIDC_ENABLED:false}
+    issuer: ${OIDC_ISSUER:}
+    client-id: ${OIDC_CLIENT_ID:}
+    client-secret: ${OIDC_CLIENT_SECRET:}

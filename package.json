@@ -3,16 +3,22 @@
   "private": true,
   "packageManager": "pnpm@10.34.9",
   "engines": {
-    "node": ">=24.18.0 <25"
+    "node": "\u003e=24.18.0 \u003c25"
   },
   "scripts": {
     "dev": "pnpm --filter @uselotuz/web dev",
+    "dev:inventory": "pnpm --filter @uselotuz/inventory dev",
+    "build:inventory": "pnpm --filter @uselotuz/inventory build",
+    "test:inventory": "pnpm --filter @uselotuz/inventory test:e2e",
     "build": "pnpm --filter @uselotuz/web build",
     "lint": "eslint . --max-warnings 0",
     "typecheck": "pnpm -r --if-present typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:e2e": "pnpm --filter @uselotuz/web test:e2e"
+    "test:e2e": "pnpm --filter @uselotuz/web test:e2e",
+    "dev:workspace": "pnpm --filter @uselotuz/workspace dev",
+    "build:workspace": "pnpm --filter @uselotuz/workspace build",
+    "test:workspace": "pnpm --filter @uselotuz/workspace test:e2e"
   },
   "devDependencies": {
     "eslint": "^9.39.1",

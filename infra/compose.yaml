@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: lotuz
+      POSTGRES_USER: ${DATABASE_USER:?Set DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - lotuz-postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d lotuz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  lotuz-postgres:

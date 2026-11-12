@@ -5,9 +5,17 @@ import nextTypescript from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
-  { settings: { next: { rootDir: "apps/web" } } },
+  {
+    settings: {
+      next: { rootDir: ["apps/web", "apps/inventory", "apps/workspace"] },
+    },
+  },
   globalIgnores([
     "**/.next/**",
+    ".m2/**",
+    ".pnpm-store/**",
+    "backend/target/**",
+    "backend/.verify-target/**",
     "**/out/**",
     "**/next-env.d.ts",
     "**/playwright-report/**",

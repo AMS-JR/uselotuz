@@ -14,8 +14,8 @@ changing the roadmap or authorizing new applications.
 
 | Product | Customer job | Status |
 | --- | --- | --- |
-| Lotuz main website | Discover and learn about products | First platform deliverable |
-| Lotuz Inventory | Track stock and plan reorders | **Provisional first MVP candidate** |
+| Lotuz main website | Discover and learn about products | Deployed to Cloudflare Pages |
+| Lotuz Inventory | Track stock and plan reorders | **Selected MVP; Phase 1 access foundation implemented** |
 | Lotuz Restaurant Food Cost & Menu Pricing | Calculate ingredient/recipe cost and prices | Future candidate |
 | Lotuz Daily Sales & Profit Tracker | Review itemized sales and margins | Future candidate |
 | Lotuz Supplier Price Tracker | Compare supplier prices | Future |
@@ -24,7 +24,13 @@ changing the roadmap or authorizing new applications.
 | Lotuz Review Reply Helper | Draft responses to reviews | Future |
 | Lotuz Waste Tracker | Record spoilage and waste | Future |
 
-**Only one SaaS MVP should be built initially.** The first MVP choice remains subject to customer validation; Inventory is a working candidate, not a proven market decision.
+**Only one SaaS MVP is being built initially: Lotuz Inventory.** It supports retail
+products and restaurant ingredients independently of POS and Food Cost. Continue
+customer validation while building; selection is not proof of market demand.
+Phase 1 is restricted to the shared platform/access foundation and Inventory shell.
+See `INVENTORY_PHASE_1.md` and `AUTH0_WORKSPACE.md`. The approved platform extension
+adds Auth0 and a lightweight central Workspace, with product-neutral business creation
+and operator-approved Inventory activation. Catalog, stock, CSV and reporting remain subsequent work.
 
 ## Phase 1 — Foundation and website
 
@@ -37,9 +43,11 @@ changing the roadmap or authorizing new applications.
 
 ## Phase 2 — Validate and build one MVP
 
-Research competitor complaints and speak with prospective owners before committing to Inventory versus Food Cost or Sales. Confirm what POS reports target businesses actually export.
+Validate workflows with retail and restaurant owners while developing Inventory.
+Manual entry comes first; prioritize CSV import/export early. POS reports are a
+future integration input, not a prerequisite for using Inventory.
 
-If Inventory is selected, a possible narrow sequence is: business/user access, product CRUD, stock receiving and adjustments, auditable movements, low-stock views and reorder lists, then basic reporting. Itemized sales CSV/Excel import is a possible later enhancement; don't assume revenue-only exports can update inventory.
+The Inventory sequence is: business/user access, products and ingredients with units, manual stock receiving and adjustments, auditable movements, early CSV import/export, low-stock views and reorder lists, then basic reporting. POS sales imports are optional later integrations; don't assume revenue-only exports can update inventory.
 
 **Exit:** An owner completes one core workflow reliably using representative or real data.
 
@@ -57,7 +65,6 @@ Consider a second independent SaaS only after the first shows repeat use and dem
 
 ## Open product decisions
 
-- Which SaaS to validate/build first?
 - Which store/restaurant owners will test the prototype?
 - Which POS item-level exports are actually available?
 - What initial pricing and onboarding promise will be tested?

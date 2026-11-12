@@ -53,7 +53,7 @@ Use strict TypeScript and functional React components. Reuse shared components a
 
 ## 7. Testing and review
 
-- Backend: JUnit 5, Mockito, Spring Boot Test; Testcontainers with PostgreSQL where valuable.
+- Backend: Spring Boot-managed JUnit Jupiter, Mockito and Spring Boot Test. The Java 21 / Spring Boot 4.1.2 foundation uses its supported JUnit 6 baseline. PostgreSQL-backed security/migration tests run against a disposable database in CI; H2 is a fast local test option, not a PostgreSQL substitute.
 - Frontend: Vitest and React Testing Library; Playwright for critical end-to-end journeys.
 - Test business rules, invalid input, transaction behavior, tenant isolation and important failure cases.
 - During review, check correctness, security, database behavior, API contracts, error handling, test coverage and unnecessary complexity.

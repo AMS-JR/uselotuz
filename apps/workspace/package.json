@@ -1,0 +1,28 @@
+{
+  "name": "@uselotuz/workspace",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start -p 3002",
+    "typecheck": "next typegen \u0026\u0026 tsc --noEmit",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@uselotuz/ui": "workspace:*",
+    "next": "16.4.6",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.0",
+    "@tailwindcss/postcss": "4.3.5",
+    "@types/node": "^24.0.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "^19.0.0",
+    "@uselotuz/config": "workspace:*",
+    "tailwindcss": "4.3.5",
+    "typescript": "5.9.3"
+  }
+}

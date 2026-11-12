@@ -71,8 +71,8 @@ References: [static Next.js Pages guide](https://developers.cloudflare.com/pages
 6. For branch previews, confirm the `X-Robots-Tag: noindex` header that
    [Pages supplies by default](https://developers.cloudflare.com/pages/configuration/preview-deployments/).
    The production branch's `pages.dev` address is different from a branch preview;
-   do not assume it has that protection. Before a custom-domain launch, use
-   project access controls if the production alias must stay private. Keep the
+   do not assume it has that protection. Use a branch preview for prelaunch
+   review and verify its noindex header before sharing the URL. Keep the
    production canonical, sitemap and sharing-image URLs at `https://uselotuz.io`;
    do not point them at temporary preview URLs.
 7. Custom-domain/DNS setup requires separate explicit approval. Add `uselotuz.io`
