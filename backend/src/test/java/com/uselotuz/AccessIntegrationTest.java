@@ -35,7 +35,7 @@ class AccessIntegrationTest {
         return oidcLogin().idToken(t -> t.claim("iss", "https://issuer.example").subject("alice"));
     }
     @BeforeEach void seed() {
-        for (String table : new String[]{"inventory_location", "product_access", "product_entitlement", "business_membership", "business", "external_identity", "platform_user"})
+        for (String table : new String[]{"inventory_item", "inventory_category", "inventory_supplier", "inventory_location", "product_access", "product_entitlement", "business_membership", "business", "external_identity", "platform_user"})
             db.update("delete from " + table);
         db.update("insert into platform_user(id,display_name) values (?,?),(?,?)", ALICE, "Alice", BOB, "Bob");
         db.update("insert into external_identity(id,user_id,issuer,subject) values (?,?,?,?)", UUID.randomUUID(), ALICE, "https://issuer.example", "alice");
@@ -298,4 +298,20 @@ class AccessIntegrationTest {
             db.execute("alter table inventory_location drop constraint lotuz_test_reject_location");
         }
     }
+    @Test void profileExposesOnlyCurrentUserDisplayClaimsAndNoTokens() throws Exception {
+        mvc.perform(get("/api/me").with(oidcLogin().idToken(t -> t.claim("iss","https://issuer.example").subject("alice")
+                .claim("name","Alice Owner").claim("email","alice@example.com").claim("picture","https://images.example/alice.png")
+                .claim("access_token","test-only-must-not-leak"))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(ALICE.toString()))
+                .andExpect(jsonPath("$.name").value("Alice Owner")).andExpect(jsonPath("$.email").value("alice@example.com"))
+                .andExpect(jsonPath("$.picture").value("https://images.example/alice.png"))
+                .andExpect(jsonPath("$.access_token").doesNotExist()).andExpect(jsonPath("$.claims").doesNotExist())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("test-only-must-not-leak"))));
+    }
+    @ParameterizedTest @ValueSource(strings={"javascript:alert(1)","data:image/png;base64,abc","http://images.example/a.png","https://user:password@images.example/a.png","not-a-url"})
+    void profileRejectsUnsafePictureUrls(String picture) throws Exception {
+        mvc.perform(get("/api/me").with(oidcLogin().idToken(t -> t.claim("iss","https://issuer.example").subject("alice").claim("picture",picture))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.picture").isEmpty());
+    }
+
 }

@@ -10,3 +10,13 @@ body {
   outline: 3px solid var(--color-primary);
   outline-offset: 4px;
 }
+
+/* Keep focused controls and anchor targets below the responsive sticky header. */
+html {
+  scroll-padding-top: 9rem;
+}
+@media (min-width: 64rem) {
+  html {
+    scroll-padding-top: 6rem;
+  }
+}

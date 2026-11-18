@@ -1,8 +1,8 @@
-# Lotuz — Product Roadmap
+# Lotuz â€” Product Roadmap
 
 ## Vision and customers
 
-Lotuz provides focused, independently usable SaaS products for convenience stores, mini-markets, independent grocers, small retailers, independent restaurants, takeout businesses and small cafés. The parent website helps customers discover products; shared accounts and optional integrations can come as the platform develops.
+Lotuz provides focused, independently usable SaaS products for convenience stores, mini-markets, independent grocers, small retailers, independent restaurants, takeout businesses and small cafÃ©s. The parent website helps customers discover products; shared accounts and optional integrations can come as the platform develops.
 
 ## Portfolio and status
 
@@ -15,7 +15,7 @@ changing the roadmap or authorizing new applications.
 | Product | Customer job | Status |
 | --- | --- | --- |
 | Lotuz main website | Discover and learn about products | Deployed to Cloudflare Pages |
-| Lotuz Inventory | Track stock and plan reorders | **Selected MVP; Phase 1 access foundation implemented** |
+| Lotuz Inventory | Track stock and plan reorders | **Selected MVP; Phase 1 access and Phase 2 catalog implemented** |
 | Lotuz Restaurant Food Cost & Menu Pricing | Calculate ingredient/recipe cost and prices | Future candidate |
 | Lotuz Daily Sales & Profit Tracker | Review itemized sales and margins | Future candidate |
 | Lotuz Supplier Price Tracker | Compare supplier prices | Future |
@@ -30,9 +30,9 @@ customer validation while building; selection is not proof of market demand.
 Phase 1 is restricted to the shared platform/access foundation and Inventory shell.
 See `INVENTORY_PHASE_1.md` and `AUTH0_WORKSPACE.md`. The approved platform extension
 adds Auth0 and a lightweight central Workspace, with product-neutral business creation
-and operator-approved Inventory activation. Catalog, stock, CSV and reporting remain subsequent work.
+and operator-approved Inventory activation. Inventory Phase 2 adds catalog CRUD, units and catalog-only CSV import/export; see `INVENTORY_PHASE_2.md`. Stock and reporting remain subsequent work.
 
-## Phase 1 — Foundation and website
+## Phase 1 â€” Foundation and website
 
 - Finalize lean project documentation and repository.
 - Scaffold only the applications and shared packages currently needed.
@@ -41,7 +41,7 @@ and operator-approved Inventory activation. Catalog, stock, CSV and reporting re
 
 **Exit:** Main website builds and can be demonstrated or deployed without requiring all future SaaS products.
 
-## Phase 2 — Validate and build one MVP
+## Phase 2 â€” Validate and build one MVP
 
 Validate workflows with retail and restaurant owners while developing Inventory.
 Manual entry comes first; prioritize CSV import/export early. POS reports are a
@@ -51,15 +51,15 @@ The Inventory sequence is: business/user access, products and ingredients with u
 
 **Exit:** An owner completes one core workflow reliably using representative or real data.
 
-## Phase 3 — Pilot
+## Phase 3 â€” Pilot
 
-Test with owners, fix usability and security issues, validate willingness to pay, improve onboarding and add billing when a paid pilot is ready. Working target: **3–5 paying pilot customers**, not a guarantee.
+Test with owners, fix usability and security issues, validate willingness to pay, improve onboarding and add billing when a paid pilot is ready. Working target: **3â€“5 paying pilot customers**, not a guarantee.
 
-## Phase 4 — Improve based on use
+## Phase 4 â€” Improve based on use
 
 Prioritize retention, reliability, mobile usability, reporting and requested integrations based on evidence. Do not add complex integrations or AI features solely because they are technically possible.
 
-## Phase 5 — Expand selectively
+## Phase 5 â€” Expand selectively
 
 Consider a second independent SaaS only after the first shows repeat use and demand. Future possibilities include shared subscriptions, optional product data connections, POS APIs, analytics, PWAs and AI assistance.
 

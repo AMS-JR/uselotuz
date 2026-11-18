@@ -1,4 +1,4 @@
-# Lotuz — Auth0 and Workspace
+# Lotuz â€” Auth0 and Workspace
 
 This extends the approved Inventory Phase 1 foundation. Workspace is a tenant and
 product administration frontend, not a required gateway to Inventory.
@@ -332,3 +332,20 @@ idempotency/concurrency. This remains separate from live Auth0 verification.
     do not satisfy this production acceptance.
 
 Stop here. Inventory catalog/stock, POS, billing and deployment remain excluded.
+
+## Subsequent Inventory catalog scope
+
+Phase 2 catalog management is documented in [INVENTORY_PHASE_2.md](INVENTORY_PHASE_2.md).
+It preserves this authentication/session and Workspace workflow. The catalog
+adds PUT to the existing exact-origin API CORS methods for editing, but adds no
+authentication infrastructure. Stock, POS, billing and production deployment remain deferred.
+
+## Workspace navigation and profile presentation
+
+Workspace now uses persistent responsive navigation with `/` (Overview), `/products`, `/businesses`, `/members` and `/settings`. These pages use the existing business, membership and product-access APIs. Business creation does not activate products. Owner/Admin retain existing business-renaming access; Staff see read-only settings and only backend-authorized membership information. No billing, invitation or account-management features are introduced.
+
+An explicit `businessId` deep link takes precedence over the last accessible selection, followed by a deterministic UUID default. Workspace stores only a business UUID under `lotuz.workspace.business.<platformUserId>`; Inventory keeps its own preference. Backend membership and entitlement checks remain authoritative. Invalid or revoked selections fall back to another accessible business or the existing empty state. Storage failures do not block access.
+
+Both applications use the shared avatar disclosure. `/api/me` exposes only platform ID and OIDC display name, optional email and a validated HTTPS picture URL. It never exposes tokens or arbitrary claims. Profile images load directly with no referrer; unavailable or broken images show initials. Logout remains an app-owned CSRF-protected backend request using the existing shared session.
+
+Manual acceptance with the real Auth0 tenant is still required: confirm available name/email/picture claims, initials and failed-image fallback, keyboard dropdown controls, login/logout from both apps, single/multiple-business selection, explicit Workspace-to-Inventory links, and revoked membership/entitlement behavior. Automated browser fixtures do not verify live Auth0 or production subdomain cookies.

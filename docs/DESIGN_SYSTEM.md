@@ -46,7 +46,7 @@ Components should support keyboard navigation, accessible labels, useful focus s
 - Use the approved blue lotus icon for the parent Lotuz identity, with appropriate clear space and without unnecessary text in icon-only placements.
 - Header and footer branding pair the unchanged lotus SVG at 44px with a 26px lowercase `lotuz` wordmark in Comfortaa Regular (400), no added flex gap and -0.03em letter spacing. Below 640px, use a 40px icon and 22px wordmark with the same zero-gap treatment. Vertically center both so the visible lotus extends slightly above and below the text. The SVG's built-in clear space provides separation so the mark and name read as one unit. Preserve existing header padding/navigation.
 - Approved parent-brand files are organized in `apps/web/public/brand/`. Use the original lotus SVG alongside the Comfortaa wordmark for responsive website branding, the supplied ICO for browser fallback, blue-background PNGs for touch/application icons, and the approved 1200×630 PNG for social sharing. Preserve the artwork's colors, aspect ratio and clear space; do not generate substitutes. See [the asset audit](BRAND_ASSETS.md) for source mappings and unused files.
-- Product icons may extend the lotus visual language while being distinct.
+- Product and Workspace icons are independently configurable. Each app owns its artwork under its own `public/brand/` and settings in `lib/branding.ts`; the shared `HeaderBrand` component accepts the logo source, application name, accessible text and optional dimensions. Workspace and Inventory currently use unchanged copies of the approved marketing lotus. Workspace displays its application name in Geist; Inventory uses an icon-only overview link (`showName: false`) with an accessible product label. Future apps may use completely different approved icons. See `BRAND_ASSETS.md` for replacement instructions.
 - Supplied source bundles are archived outside the website at `assets/brand-source/uselotuz/` and `assets/brand-source/inventory/`. Only selected production files belong in `apps/web/public/brand/`; do not publish the source archives or use Inventory artwork for parent-brand placements.
 - Use consistent Lucide icon sizing/strokes for interface actions; avoid emojis as interface icon substitutes.
 
@@ -78,3 +78,9 @@ Use these as quality references, not designs to copy. Maintain Lotuz's original 
 Check token use, consistency with shared components, readability/contrast, responsive behavior, keyboard interaction, loading/empty/error states and consistency with existing product screens.
 
 Technology selection and repository architecture are defined in `ARCHITECTURE.md`; this file defines visual behavior only.
+
+## Authenticated application layout
+
+Workspace and Inventory share a compact profile avatar disclosure, persistent header, business switcher, desktop sidebar and mobile navigation. Use the current user's HTTPS profile picture with initials for absent or failed images. The disclosure shows name, available email and Sign out; include additional links only for existing destinations. Support keyboard activation, Escape dismissal and outside-click dismissal.
+
+Workspace navigation covers Overview, Products, Businesses, Membership and existing business Settings. Inventory navigation covers its catalog and overview. Keep each application's business selection and branding independent. Do not duplicate Inventory catalog statistics in Workspace or advertise unsupported account settings, billing or invitations.

@@ -18,3 +18,7 @@ export function Card({ className = "", ...props }: ComponentProps<"div">) {
     />
   );
 }
+
+export { HeaderBrand, type HeaderBrandProps } from "./header-brand";
+
+export { AccountMenu, type AccountProfile } from "./account-menu";

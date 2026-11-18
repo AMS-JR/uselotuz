@@ -1,5 +1,4 @@
-import { InventoryShell } from "../components/inventory-shell";
-
+import { Overview } from "../components/overview";
 export default function Page() {
-  return <InventoryShell />;
+  return <Overview />;
 }

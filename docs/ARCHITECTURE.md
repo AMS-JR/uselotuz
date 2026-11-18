@@ -1,4 +1,4 @@
-# Lotuz — Architecture and Technology Decisions
+# Lotuz â€” Architecture and Technology Decisions
 
 ## 1. System shape
 
@@ -60,20 +60,20 @@ remaining infrastructure choices stay TBD; Auth0 is now the approved identity pr
 
 ```text
 uselotuz/
-├── apps/
-│   ├── web/                 # Main Lotuz site; build first
-│   ├── inventory/           # Phase 1 authenticated application shell
-│   ├── workspace/           # Lightweight central business/product administration
-│   └── foodcost/            # Future, do not scaffold now
-├── packages/
-│   ├── ui/                  # Shared components and design tokens
-│   ├── config/              # Shared frontend configuration, if needed
-│   └── types/               # Shared TS contracts, if needed
-├── backend/                 # Java modular monolith
-├── infra/                   # Docker Compose and infrastructure config
-├── docs/
-├── AGENTS.md
-└── README.md
+â”œâ”€â”€ apps/
+â”‚   â”œâ”€â”€ web/                 # Main Lotuz site; build first
+â”‚   â”œâ”€â”€ inventory/           # Phase 1 authenticated application shell
+â”‚   â”œâ”€â”€ workspace/           # Lightweight central business/product administration
+â”‚   â””â”€â”€ foodcost/            # Future, do not scaffold now
+â”œâ”€â”€ packages/
+â”‚   â”œâ”€â”€ ui/                  # Shared components and design tokens
+â”‚   â”œâ”€â”€ config/              # Shared frontend configuration, if needed
+â”‚   â””â”€â”€ types/               # Shared TS contracts, if needed
+â”œâ”€â”€ backend/                 # Java modular monolith
+â”œâ”€â”€ infra/                   # Docker Compose and infrastructure config
+â”œâ”€â”€ docs/
+â”œâ”€â”€ AGENTS.md
+â””â”€â”€ README.md
 ```
 
 Folders are illustrative, not a requirement to create empty directories. Use a feature-based backend package structure; see `CODING_STANDARDS.md` for its internal layers.
@@ -82,7 +82,8 @@ Folders are illustrative, not a requirement to create empty directories. Use a f
 
 - `apps/web`: brand homepage, product discovery, links, public information; no server-only Next.js dependency while using static export.
 - Product frontends: independently deployable and product-specific user experiences, sharing approved UI components and API conventions.
-- Implemented shared platform modules: `identity`, `business`, `access`. The first product module is `inventory`, currently limited to its access context and default location. Future product modules are added only when their development is approved.
+- Branding is application-owned: each app configures its own `lib/branding.ts` and serves its own `public/brand/` assets. Shared `HeaderBrand` provides presentation only, with explicit logo/name/accessibility inputs and no default marketing identity. Workspace and Inventory currently hold independent copies of the approved lotus; future products may use different icons without changing other apps.
+- Implemented shared platform modules: `identity`, `business`, `access`. The first product module is `inventory`, owning its access context, default location and Phase 2 catalog (items, categories, suppliers, units and CSV). See `INVENTORY_PHASE_2.md`; stock remains deferred. Future product modules are added only when their development is approved.
 - Each module owns its persistence. Other modules use explicit application interfaces, not repositories or entities. Future product connections use authorized APIs/events rather than shared-table access; no broker or connector infrastructure is implemented in Phase 1.
 - Frontends call the backend over HTTPS; backend enforces business rules and permissions. Do not rely on frontend access checks for security.
 

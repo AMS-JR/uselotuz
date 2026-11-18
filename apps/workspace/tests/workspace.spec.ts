@@ -7,6 +7,21 @@ const business = {
 };
 const inventoryUrl = `http://localhost:3001/?businessId=${business.id}`;
 
+async function navigate(page: Page, name: string) {
+  const link = page
+    .getByRole("navigation", { name: "Workspace navigation" })
+    .getByRole("link", { name, exact: true });
+  if (!(await link.isVisible()))
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const destination = new URL((await link.getAttribute("href"))!, page.url())
+    .pathname;
+  await link.click();
+  await expect(page).toHaveURL((url) => url.pathname === destination);
+  await expect(
+    page.getByRole("heading", { name, exact: true, level: 1 }),
+  ).toBeVisible();
+}
+
 async function configured(page: Page) {
   await page.route("**/api/auth/config", (route) =>
     route.fulfill({ json: { enabled: true } }),
@@ -72,6 +87,15 @@ test("sign-in and signup preserve the Workspace application destination", async 
     route.fulfill({ status: 401 }),
   );
   await page.goto("/?authError=login_failed");
+  const brand = page
+    .getByRole("banner")
+    .getByRole("img", { name: "Lotuz Workspace", exact: true });
+  await expect(brand).toBeVisible();
+  await expect(brand).toHaveText("Workspace");
+  await expect(brand.locator("img")).toHaveAttribute(
+    "src",
+    "/brand/logo/lotus.svg",
+  );
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
     "Sign-in did not complete",
   );
@@ -95,13 +119,36 @@ test("an activated accessible product opens Inventory with the selected business
 }) => {
   await member(page);
   await page.goto("/");
+  await page.getByLabel("Account menu for Alex", { exact: true }).click();
   await expect(page.getByText("Alex", { exact: true })).toBeVisible();
+  const brand = page
+    .getByRole("banner")
+    .getByRole("img", { name: "Lotuz Workspace", exact: true });
+  await expect(brand).toBeVisible();
+  await expect(brand).toHaveText("");
+  await expect(brand.locator("img")).toHaveAttribute(
+    "src",
+    "/brand/logo/lotus.svg",
+  );
+  await expect(
+    page.getByRole("link", { name: "Lotuz Workspace overview", exact: true }),
+  ).toHaveAttribute("href", `/?businessId=${business.id}`);
+  await expect(page).toHaveTitle("Lotuz Workspace");
+  await expect(page.locator('meta[name="application-name"]')).toHaveAttribute(
+    "content",
+    "Lotuz Workspace",
+  );
   await expect(
     page.getByRole("link", { name: "Open Inventory" }),
   ).toHaveAttribute("href", inventoryUrl);
+  await expect(page.getByLabel("Business", { exact: true })).toHaveValue(
+    business.id,
+  );
+  await navigate(page, "Settings");
   await expect(page.getByLabel("Business name", { exact: true })).toHaveValue(
     business.name,
   );
+  await navigate(page, "Membership");
   await expect(
     page.getByRole("listitem").filter({ hasText: /owner \(you\)/i }),
   ).toBeVisible();
@@ -112,7 +159,7 @@ test("inactive products require operator approval and cannot be self-activated",
 }) => {
   await member(page, false);
   await page.goto("/");
-  await expect(page.getByText("Available · activation required")).toBeVisible();
+  await expect(page.getByText("Available - activation required")).toBeVisible();
   await expect(
     page.getByText(/Contact Lotuz to request activation/),
   ).toBeVisible();
@@ -127,13 +174,15 @@ test("business creation uses CSRF and shows the new business without auto-activa
 }) => {
   await configured(page);
   await page.route("**/api/me", (route) => route.fulfill({ json: user }));
+  let created = false;
   await page.route("**/api/businesses", (route) => {
     if (route.request().method() === "POST") {
       expect(route.request().headers()["x-csrf-token"]).toBe("test-csrf");
       expect(route.request().postDataJSON()).toEqual({ name: "Corner store" });
+      created = true;
       return route.fulfill({ status: 201, json: business });
     }
-    return route.fulfill({ json: [] });
+    return route.fulfill({ json: created ? [business] : [] });
   });
   await page.route(`**/api/businesses/${business.id}`, (route) =>
     route.fulfill({ json: { ...business, role: "OWNER", canManage: true } }),
@@ -154,7 +203,7 @@ test("business creation uses CSRF and shows the new business without auto-activa
       ],
     }),
   );
-  await page.goto("/");
+  await page.goto("/businesses");
   await page.getByLabel("New business name").fill("Corner store");
   await page
     .getByRole("button", { name: "Create business", exact: true })
@@ -162,7 +211,7 @@ test("business creation uses CSRF and shows the new business without auto-activa
   await expect(page.getByLabel("Business", { exact: true })).toHaveValue(
     business.id,
   );
-  await expect(page.getByText("Available · activation required")).toBeVisible();
+  await expect(page.getByText("Available - activation required")).toBeVisible();
 });
 
 test("business settings save with CSRF while staff has no editing controls", async ({
@@ -181,7 +230,7 @@ test("business settings save with CSRF while staff has no editing controls", asy
       json: { ...business, role: "OWNER", canManage: true },
     });
   });
-  await page.goto("/");
+  await page.goto("/settings");
   await page
     .getByLabel("Business name", { exact: true })
     .fill("New store name");
@@ -216,11 +265,14 @@ test("business switching clears old product links when the backend denies access
   ).toBeVisible();
   await page.getByLabel("Business", { exact: true }).selectOption(other.id);
   await expect(page.getByRole("main").getByRole("alert")).toContainText(
-    "no longer have access",
+    /no longer have access|unavailable/,
   );
-  await expect(page.getByRole("link", { name: "Open Inventory" })).toHaveCount(
-    0,
+  await expect(page.getByLabel("Business", { exact: true })).toHaveValue(
+    business.id,
   );
+  await expect(
+    page.getByRole("link", { name: "Open Inventory" }),
+  ).toHaveAttribute("href", inventoryUrl);
 });
 
 test("sign-out uses the CSRF-protected backend workflow and clears the account", async ({
@@ -248,6 +300,7 @@ test("sign-out uses the CSRF-protected backend workflow and clears the account",
   await expect(
     page.getByRole("link", { name: "Open Inventory" }),
   ).toBeVisible();
+  await page.getByLabel("Account menu for Alex", { exact: true }).click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(
     page.getByRole("link", { name: "Sign in", exact: true }),
@@ -255,5 +308,153 @@ test("sign-out uses the CSRF-protected backend workflow and clears the account",
   await expect(page.getByText("Alex", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Open Inventory" })).toHaveCount(
     0,
+  );
+});
+
+test("app-owned header logo and metadata load on desktop and mobile", async ({
+  page,
+  request,
+}) => {
+  await page.route("**/api/auth/config", (route) =>
+    route.fulfill({ json: { enabled: false } }),
+  );
+  await page.goto("/");
+  const brand = page
+    .getByRole("banner")
+    .getByRole("img", { name: "Lotuz Workspace", exact: true });
+  await expect(brand).toBeVisible();
+  await expect(brand).toContainText("Workspace");
+  const logo = brand.locator("img");
+  await expect(logo).toHaveAttribute("src", "/brand/logo/lotus.svg");
+  await expect(logo).toHaveJSProperty("complete", true);
+  expect(
+    await logo.evaluate((image: HTMLImageElement) => image.naturalWidth),
+  ).toBeGreaterThan(0);
+  await expect(page).toHaveTitle("Lotuz Workspace");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+    "content",
+    "noindex, nofollow",
+  );
+  await expect(page.locator('meta[name="application-name"]')).toHaveAttribute(
+    "content",
+    "Lotuz Workspace",
+  );
+  await expect(
+    page.locator('link[rel="icon"][type="image/svg+xml"]'),
+  ).toHaveAttribute("href", "/brand/logo/lotus.svg");
+  await expect(page.locator('link[rel="shortcut icon"]')).toHaveAttribute(
+    "href",
+    "/brand/favicons/favicon.ico",
+  );
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute(
+    "href",
+    "/brand/app-icons/apple-touch-icon.png",
+  );
+  for (const asset of [
+    "/brand/logo/lotus.svg",
+    "/brand/favicons/favicon.ico",
+    "/brand/app-icons/apple-touch-icon.png",
+  ]) {
+    const response = await request.get(asset);
+    expect(response.ok()).toBeTruthy();
+    expect(response.headers()["content-type"]).toContain("image/");
+  }
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+  ).toBe(false);
+});
+
+test("Workspace restores user-scoped business choices and honors explicit deep links", async ({
+  page,
+}) => {
+  await member(page);
+  const other = {
+    id: "10000000-0000-0000-0000-000000000002",
+    name: "Restaurant",
+  };
+  await page.route("**/api/businesses", (route) =>
+    route.fulfill({ json: [other, business] }),
+  );
+  await page.route(`**/api/businesses/${other.id}`, (route) =>
+    route.fulfill({ json: { ...other, role: "OWNER", canManage: true } }),
+  );
+  await page.goto("/");
+  await expect(page.getByLabel("Business", { exact: true })).toHaveValue(
+    business.id,
+  );
+  await page.getByLabel("Business", { exact: true }).selectOption(other.id);
+  await expect(page).toHaveURL(new RegExp(other.id));
+  await expect(
+    page.getByRole("heading", { name: "Overview", exact: true }),
+  ).toBeVisible();
+  await page.goto("/");
+  await expect(page.getByLabel("Business", { exact: true })).toHaveValue(
+    other.id,
+  );
+  await page.goto(`/settings?businessId=${business.id}`);
+  await expect(page.getByLabel("Business name", { exact: true })).toHaveValue(
+    business.name,
+  );
+  await page.screenshot({
+    path: test.info().outputPath("workspace-settings.png"),
+    fullPage: true,
+  });
+});
+test("Workspace navigation works on desktop and mobile without exposing unimplemented features", async ({
+  page,
+}) => {
+  await member(page);
+  await page.goto("/");
+  await expect(
+    page.getByRole("heading", { name: "Overview", exact: true }),
+  ).toBeVisible();
+  await page.screenshot({
+    path: test.info().outputPath("workspace-overview.png"),
+    fullPage: true,
+  });
+  for (const name of [
+    "Products",
+    "Businesses",
+    "Membership",
+    "Settings",
+    "Overview",
+  ]) {
+    await navigate(page, name);
+    expect(new URL(page.url()).searchParams.get("businessId")).toBe(
+      business.id,
+    );
+  }
+  await expect(
+    page.getByRole("link", { name: /Billing|Invitations|Profile settings/ }),
+  ).toHaveCount(0);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > innerWidth,
+    ),
+  ).toBe(false);
+});
+test("a stored business preference from another user is ignored", async ({
+  page,
+}) => {
+  await member(page);
+  const other = {
+    id: "10000000-0000-0000-0000-000000000002",
+    name: "Restaurant",
+  };
+  await page.route("**/api/businesses", (route) =>
+    route.fulfill({ json: [other, business] }),
+  );
+  await page.route(`**/api/businesses/${other.id}`, (route) =>
+    route.fulfill({ json: { ...other, role: "OWNER", canManage: true } }),
+  );
+  await page.addInitScript(
+    (id) => localStorage.setItem("lotuz.workspace.business.someone-else", id),
+    other.id,
+  );
+  await page.goto("/");
+  await expect(page.getByLabel("Business", { exact: true })).toHaveValue(
+    business.id,
   );
 });

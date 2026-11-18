@@ -25,7 +25,7 @@ public class SecurityConfiguration {
         var cors = new CorsConfiguration();
         cors.setAllowedOrigins(destinations.origins());
         cors.setAllowCredentials(true);
-        cors.setAllowedMethods(List.of("GET", "POST", "PATCH", "OPTIONS"));
+        cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "OPTIONS"));
         cors.setAllowedHeaders(List.of("Content-Type", "X-CSRF-TOKEN"));
         cors.setExposedHeaders(List.of("Location"));
         var source = new UrlBasedCorsConfigurationSource();

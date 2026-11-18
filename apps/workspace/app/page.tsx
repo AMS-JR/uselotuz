@@ -1,5 +1,4 @@
-import { WorkspaceShell } from "../components/workspace-shell";
-
+import { BusinessPanel } from "../components/business-panel";
 export default function Page() {
-  return <WorkspaceShell />;
+  return <BusinessPanel section="overview" />;
 }

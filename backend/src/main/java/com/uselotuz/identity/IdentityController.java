@@ -21,7 +21,14 @@ class IdentityController {
         return Map.of("headerName", token.getHeaderName(), "token", token.getToken());
     }
     @GetMapping("/api/me") UserView me(@AuthenticationPrincipal OidcUser user) {
-        return new UserView(identities.requireUser(user), user.getFullName() == null ? "Lotuz user" : user.getFullName());
+        return new UserView(identities.requireUser(user), user.getFullName() == null || user.getFullName().isBlank() ? "Lotuz user" : user.getFullName(),
+                user.getEmail(), profilePicture(user.getClaimAsString("picture")));
     }
-    record UserView(UUID id, String name) {}
+    private static String profilePicture(String value) {
+        try {
+            var uri=java.net.URI.create(value);
+            return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost()!=null && uri.getUserInfo()==null ? uri.toASCIIString() : null;
+        } catch (RuntimeException exception) { return null; }
+    }
+    record UserView(UUID id, String name, String email, String picture) {}
 }

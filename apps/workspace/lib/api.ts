@@ -20,12 +20,15 @@ export async function mutate(
   path: string,
   method: "POST" | "PATCH",
   body?: unknown,
+  signal?: AbortSignal,
 ) {
   const csrf = await read<{ headerName: string; token: string }>(
     "/api/auth/csrf",
+    signal,
   );
   const response = await fetch(`${api}${path}`, {
     method,
+    signal,
     credentials: "include",
     cache: "no-store",
     headers: {
@@ -38,8 +41,8 @@ export async function mutate(
   return response;
 }
 
-export function loginUrl(signup = false) {
-  const query = new URLSearchParams({ app: "workspace", returnTo: "/" });
+export function loginUrl(signup = false, returnTo = "/") {
+  const query = new URLSearchParams({ app: "workspace", returnTo });
   if (signup) query.set("screen_hint", "signup");
   return `${api}/oauth2/authorization/lotuz?${query}`;
 }

@@ -5,6 +5,10 @@ spring:
     url: ${DATABASE_URL:jdbc:postgresql://localhost:5433/lotuz}
     username: ${DATABASE_USER}
     password: ${DATABASE_PASSWORD}
+  servlet:
+    multipart:
+      max-file-size: 1MB
+      max-request-size: 2MB
   jpa:
     open-in-view: false
     hibernate:

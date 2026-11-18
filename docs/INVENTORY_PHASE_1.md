@@ -1,8 +1,11 @@
-# Lotuz Inventory — Phase 1
+# Lotuz Inventory â€” Phase 1
 
 Lotuz is a connected SaaS ecosystem under Menes. Identity, Business and Access
 are shared UseLotuz platform modules. Inventory is the first product module;
 future products must work independently and connect only through approved contracts.
+
+This document records the Phase 1 baseline. The approved catalog extension is
+implemented separately in [Inventory Phase 2](INVENTORY_PHASE_2.md).
 
 ## Implemented boundary
 

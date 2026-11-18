@@ -108,3 +108,42 @@ implementation. The approved social image is intentionally icon-only. A text-bea
 social variant would require a separately approved asset, not a generated substitute.
 Public sharing previews can be verified after a separately approved deployment;
 local checks validate metadata, dimensions and static asset delivery.
+
+## Application-owned branding
+
+Workspace and Inventory currently reuse the approved marketing lotus, copied
+byte-for-byte into **each** app's own public directory:
+
+- `apps/workspace/public/brand/logo/lotus.svg`
+- `apps/inventory/public/brand/logo/lotus.svg`
+
+Each app also owns copies of `brand/favicons/favicon.ico` and
+`brand/app-icons/apple-touch-icon.png`, taken unchanged from `apps/web/public/brand/`.
+These supply the browser fallback and Apple touch metadata. The app-owned SVG
+supplies both the header icon and scalable favicon. No extra manifest, social
+image, generated asset, or unused app-icon copy is introduced.
+
+The visible headers show the icon followed by **Workspace** or **Inventory** in
+Geist. Their accessible names remain **Lotuz Workspace** and **Lotuz Inventory**.
+Existing titles, descriptions and noindex directives are retained.
+
+`packages/ui/src/header-brand.tsx` shares only presentation. It requires a logo
+source, app name and accessible text, with optional maximum logo width/height.
+It contains no default logo, marketing URL, brand color, or product identity.
+The header renders a non-interactive brand group, preserving navigation behavior.
+Icons preserve their aspect ratio and fit within 40px on mobile / 44px on desktop
+and the app's configured dimensions.
+
+To replace one application's logo:
+
+1. Add its approved replacement artwork to that app's `public/brand/`.
+2. Edit that app's `lib/branding.ts`: update `header.logoSrc`, dimensions and
+   accessible text as needed. `header.appName` controls the adjacent product name.
+3. Update `icons` in the same config to point to the app's replacement favicon
+   and touch artwork. Do not leave old lotus metadata if the product changes icons.
+4. Run that app's build/browser checks plus shared lint/types/formatting checks.
+
+Do not edit the shared component or another app's files to change a product logo.
+There are no imports from `apps/web`, cross-app asset URLs, synchronization scripts
+or required shared artwork at runtime/build time. Marketing remains unchanged.
+Future products may choose entirely different approved symbols.

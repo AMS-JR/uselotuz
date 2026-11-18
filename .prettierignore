@@ -18,3 +18,7 @@ backend/.verify-target/
 apps/web/public/brand/
 
 .pnpm-store/
+
+apps/inventory/public/brand/
+
+apps/workspace/public/brand/

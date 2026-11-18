@@ -18,22 +18,22 @@ unchanged; they are not customer-facing brand names.
 ## Project status
 
 The main website is deployed to Cloudflare Pages. Lotuz Inventory is the selected
-first SaaS product, with its Phase 1 platform/access foundation implemented.
+first SaaS product, with its Phase 1 platform/access foundation and Phase 2 catalog implemented.
 Lotuz is a connected ecosystem under Menes; each product remains independently usable.
 Do not scaffold or launch the entire portfolio at once.
 
 ## Repository
 
-- `apps/` — independent frontend applications, added as needed
-- `packages/` — shared UI and frontend configuration
-- `backend/` — modular Spring Boot application
-- `infra/` — local infrastructure and deployment configuration
-- `docs/` — decisions, design rules, coding conventions and roadmap
-- `assets/brand-source/` — non-public archives of supplied parent and Inventory artwork
+- `apps/` â€” independent frontend applications, added as needed
+- `packages/` â€” shared UI and frontend configuration
+- `backend/` â€” modular Spring Boot application
+- `infra/` â€” local infrastructure and deployment configuration
+- `docs/` â€” decisions, design rules, coding conventions and roadmap
+- `assets/brand-source/` â€” non-public archives of supplied parent and Inventory artwork
 
 The workspace contains `apps/web`, `apps/inventory`, `apps/workspace`, `packages/ui`, and
 `packages/config`, plus a modular Spring Boot `backend` and local PostgreSQL
-configuration in `infra/`. Catalog and stock workflows remain outside Phase 1.
+configuration in `infra/`. Catalog CRUD, units and atomic CSV import/export are implemented in Phase 2; stock workflows remain deferred.
 
 ## Documentation
 
@@ -45,6 +45,7 @@ configuration in `infra/`. Catalog and stock workflows remain outside Phase 1.
 - [Deployment settings and release checklist](docs/DEPLOYMENT.md)
 - [Inventory Phase 1 setup, authentication and verification](docs/INVENTORY_PHASE_1.md)
 - [Auth0 and Workspace setup, sessions and manual acceptance](docs/AUTH0_WORKSPACE.md)
+- [Inventory Phase 2 catalog, API, CSV and testing](docs/INVENTORY_PHASE_2.md)
 
 ## Development
 
@@ -93,7 +94,7 @@ provisioning are documented in [Inventory Phase 1](docs/INVENTORY_PHASE_1.md).
 
 - `apps/web`: public, static product-discovery site. Inventory is described as
   a proposed product under validation; no Inventory functionality is implemented.
-- `apps/inventory`: independently accessible authenticated Inventory shell.
+- `apps/inventory`: independently accessible authenticated Inventory application with automatic business selection, a catalog overview, and dedicated Items, Categories, Suppliers, Import / Export and Settings routes.
 - `apps/workspace`: business and product administration; creating a business activates no products. Product activation is operator-approved.
 - `packages/ui`: semantic Tailwind theme and small, server-compatible UI components.
   Add shadcn/ui primitives here when interactive components require them; the
@@ -136,3 +137,7 @@ indexing protection and the separately approved custom-domain procedure.
 ## License
 
 Proprietary. All rights reserved.
+
+### Workspace and Inventory navigation
+
+Workspace provides business Overview, Products, Businesses, Membership and existing Settings pages with a shared responsive shell and profile avatar. Inventory retains independent catalog navigation and business selection, with an icon-only lotus overview link. Each app owns its branding configuration and business preference; backend access checks remain authoritative. See [Auth0 and Workspace](docs/AUTH0_WORKSPACE.md) for profile/session details and [Inventory Phase 2](docs/INVENTORY_PHASE_2.md) for empty-catalog behavior and local summary-route 404 troubleshooting.
