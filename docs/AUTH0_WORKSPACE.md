@@ -43,7 +43,7 @@ Signup/login creates a user mapping only, not a business, grant or entitlement.
 | `POST /api/auth/logout?app=workspace`                      | CSRF-protected local logout; 204 plus exposed `Location` for top-level provider logout   |
 | `POST /api/auth/logout`                                    | Preserved Phase 1 local-only 204 logout contract                                         |
 | `GET /api/me`                                              | Current mapped user ID and display name                                                  |
-| `GET /api/businesses`                                      | Current user's active memberships and role for each business                            |
+| `GET /api/businesses`                                      | Current user's active memberships and role for each business                             |
 | `POST /api/businesses`                                     | Creates business and OWNER membership in one transaction; body `{"name":"Corner store"}` |
 | `GET /api/businesses/{id}`                                 | Active member; own business role and management capability                               |
 | `PATCH /api/businesses/{id}`                               | Business OWNER/ADMIN; validates name, requires CSRF                                      |
