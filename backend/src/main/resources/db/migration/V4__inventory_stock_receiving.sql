@@ -1,0 +1,11 @@
+ALTER TABLE inventory_stock_movement DROP CONSTRAINT inventory_stock_movement_movement_type_check;
+ALTER TABLE inventory_stock_movement DROP CONSTRAINT inventory_opening_unique;
+ALTER TABLE inventory_stock_movement ADD CONSTRAINT inventory_movement_type_check CHECK (movement_type IN ('OPENING', 'RECEIPT'));
+ALTER TABLE inventory_stock_movement ADD COLUMN supplier_id UUID;
+ALTER TABLE inventory_stock_movement ADD COLUMN receipt_reference VARCHAR(200);
+ALTER TABLE inventory_stock_movement ADD COLUMN notes VARCHAR(2000);
+ALTER TABLE inventory_stock_movement ADD COLUMN idempotency_key UUID;
+ALTER TABLE inventory_stock_movement ADD CONSTRAINT inventory_movement_supplier_tenant_fk FOREIGN KEY (business_id, supplier_id) REFERENCES inventory_supplier(business_id, id);
+ALTER TABLE inventory_stock_movement ADD CONSTRAINT inventory_receipt_fields_check CHECK ((movement_type = 'RECEIPT' AND idempotency_key IS NOT NULL AND quantity > 0) OR (movement_type = 'OPENING' AND idempotency_key IS NULL AND supplier_id IS NULL AND receipt_reference IS NULL AND notes IS NULL));
+CREATE UNIQUE INDEX inventory_opening_unique ON inventory_stock_movement(business_id, item_id, location_id) WHERE movement_type = 'OPENING';
+CREATE UNIQUE INDEX inventory_receipt_idempotency_unique ON inventory_stock_movement(business_id, idempotency_key) WHERE movement_type = 'RECEIPT';

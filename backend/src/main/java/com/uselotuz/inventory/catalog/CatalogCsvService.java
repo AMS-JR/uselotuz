@@ -3,6 +3,7 @@ package com.uselotuz.inventory.catalog;
 import static com.uselotuz.inventory.catalog.CatalogDtos.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.*;
+import java.math.BigDecimal;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,6 +82,9 @@ public class CatalogCsvService {
         if(value==null) value="";
         if(unsafe(value)) value="'"+value;
         return "\""+value.replace("\"","\"\"")+"\"";
+    }
+    static String numericCell(BigDecimal value) {
+        return value == null ? cell(null) : value.stripTrailingZeros().toPlainString();
     }
     private static String unprotect(String value) {
         return value.startsWith("'") && unsafe(value.substring(1)) ? value.substring(1) : value;

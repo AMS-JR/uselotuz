@@ -14,6 +14,7 @@ export async function mockInventory(
   page: Page,
   options: {
     role?: string;
+    rolesByBusiness?: Record<string, string>;
     profile?: { name?: string; email?: string | null; picture?: string | null };
     businesses?: { id: string; name: string }[];
     enabled?: boolean;
@@ -55,7 +56,7 @@ export async function mockInventory(
       return route.fulfill({
         json: {
           businessId: id,
-          role: options.role ?? "ADMIN",
+          role: options.rolesByBusiness?.[id] ?? options.role ?? "ADMIN",
           location: {
             id: `location-${id}`,
             name: id === A ? "Store room" : "Kitchen",
@@ -64,8 +65,16 @@ export async function mockInventory(
       });
     if (tail === "inventory/catalog/summary")
       return route.fulfill({ json: options.summaries?.[id] ?? emptySummary });
+    if (tail === "inventory/stock/alerts")
+      return route.fulfill({ json: { lowStock: 0, outOfStock: 0 } });
     if (tail === "inventory/catalog/items")
       return route.fulfill({ json: { items: [], total: 0 } });
+    if (tail === "inventory/stock/batch")
+      return route.fulfill({
+        json: (new URL(route.request().url()).searchParams.get("itemIds") ?? "")
+          .split(",")
+          .map((itemId) => ({ itemId, quantity: null })),
+      });
     if (
       ["inventory/catalog/categories", "inventory/catalog/suppliers"].includes(
         tail,

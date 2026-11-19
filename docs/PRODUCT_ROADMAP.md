@@ -15,7 +15,7 @@ changing the roadmap or authorizing new applications.
 | Product | Customer job | Status |
 | --- | --- | --- |
 | Lotuz main website | Discover and learn about products | Deployed to Cloudflare Pages |
-| Lotuz Inventory | Track stock and plan reorders | **Selected MVP; Phase 1 access and Phase 2 catalog implemented** |
+| Lotuz Inventory | Track stock and plan reorders | **Selected MVP; access, catalog, stock movements, low-stock alerts and reorder planning implemented** |
 | Lotuz Restaurant Food Cost & Menu Pricing | Calculate ingredient/recipe cost and prices | Future candidate |
 | Lotuz Daily Sales & Profit Tracker | Review itemized sales and margins | Future candidate |
 | Lotuz Supplier Price Tracker | Compare supplier prices | Future |
@@ -27,10 +27,10 @@ changing the roadmap or authorizing new applications.
 **Only one SaaS MVP is being built initially: Lotuz Inventory.** It supports retail
 products and restaurant ingredients independently of POS and Food Cost. Continue
 customer validation while building; selection is not proof of market demand.
-Phase 1 is restricted to the shared platform/access foundation and Inventory shell.
+Phase 1 established the shared platform/access foundation and Inventory shell.
 See `INVENTORY_PHASE_1.md` and `AUTH0_WORKSPACE.md`. The approved platform extension
 adds Auth0 and a lightweight central Workspace, with product-neutral business creation
-and operator-approved Inventory activation. Inventory Phase 2 adds catalog CRUD, units and catalog-only CSV import/export; see `INVENTORY_PHASE_2.md`. Stock and reporting remain subsequent work.
+and operator-approved Inventory activation. Inventory Phase 2 added catalog CRUD, units and catalog-only CSV import/export; see `INVENTORY_PHASE_2.md`. Opening balances, receipts, adjustments, consumption, movement history, low-stock alerts and reorder planning are implemented; see `INVENTORY_STOCK.md`. Basic current-stock and movement reporting and physical stock counts are implemented.
 
 ## Phase 1 â€” Foundation and website
 
@@ -71,3 +71,7 @@ Consider a second independent SaaS only after the first shows repeat use and dem
 - When does evidence justify building another product?
 
 Technology and hosting decisions are maintained in `ARCHITECTURE.md`, not repeated here.
+
+Workspace membership management supports owner-issued, manually delivered employee
+invitations and explicit Inventory grants. Automated email delivery and production
+invitation rate limiting remain future operational work.

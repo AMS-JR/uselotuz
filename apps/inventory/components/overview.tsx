@@ -2,7 +2,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card } from "@uselotuz/ui";
-import { CatalogError, catalogRequest } from "../lib/catalog-api";
+import {
+  CatalogError,
+  catalogRequest,
+  inventoryRequest,
+} from "../lib/catalog-api";
 import { useInventory } from "./inventory-shell";
 type Summary = {
   activeItems: number;
@@ -18,8 +22,13 @@ type Summary = {
   }[];
 };
 export function Overview() {
-  const { businessId, businessName, role, href, onAccessLost } = useInventory();
+  const { businessId, businessName, role, href, onAccessLost, location } =
+    useInventory();
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [alerts, setAlerts] = useState<{
+    lowStock: number;
+    outOfStock: number;
+  } | null>(null);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   useEffect(() => {
@@ -27,12 +36,23 @@ export function Overview() {
     async function load() {
       setError("");
       setSummary(null);
+      setAlerts(null);
       try {
-        const response = await catalogRequest(businessId, "/summary", {
-          signal: controller.signal,
-        });
+        const [response, alertResponse] = await Promise.all([
+          catalogRequest(businessId, "/summary", { signal: controller.signal }),
+          inventoryRequest(
+            businessId,
+            `/stock/alerts?${new URLSearchParams({ locationId: location.id })}`,
+            { signal: controller.signal },
+          ),
+        ]);
         const result: Summary = await response.json();
-        if (!controller.signal.aborted) setSummary(result);
+        const stockAlerts: { lowStock: number; outOfStock: number } =
+          await alertResponse.json();
+        if (!controller.signal.aborted) {
+          setSummary(result);
+          setAlerts(stockAlerts);
+        }
       } catch (reason) {
         if (controller.signal.aborted) return;
         if (
@@ -50,7 +70,7 @@ export function Overview() {
     }
     void load();
     return () => controller.abort();
-  }, [businessId, onAccessLost, revision]);
+  }, [businessId, location.id, onAccessLost, revision]);
   const manage = role === "OWNER" || role === "ADMIN";
   return (
     <section className="space-y-8">
@@ -66,22 +86,30 @@ export function Overview() {
             A clear view of your business catalog.
           </p>
         </div>
-        {manage && (
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href={href("/items?action=add")}
-              className="inline-flex min-h-11 items-center rounded-control bg-primary px-4 text-sm font-medium text-white hover:bg-primary-hover"
-            >
-              Add item
-            </Link>
-            <Link
-              href={href("/import-export")}
-              className="inline-flex min-h-11 items-center rounded-control border border-border bg-surface px-4 text-sm text-primary"
-            >
-              Import CSV
-            </Link>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={href("/reorder")}
+            className="inline-flex min-h-11 items-center rounded-control border border-border bg-surface px-4 text-sm font-medium text-primary hover:bg-background"
+          >
+            Reorder List
+          </Link>
+          {manage && (
+            <>
+              <Link
+                href={href("/items?action=add")}
+                className="inline-flex min-h-11 items-center rounded-control bg-primary px-4 text-sm font-medium text-white hover:bg-primary-hover"
+              >
+                Add item
+              </Link>
+              <Link
+                href={href("/import-export")}
+                className="inline-flex min-h-11 items-center rounded-control border border-border bg-surface px-4 text-sm text-primary"
+              >
+                Import CSV
+              </Link>
+            </>
+          )}
+        </div>
       </div>
       {error ? (
         <Card>
@@ -93,25 +121,38 @@ export function Overview() {
             Try again
           </button>
         </Card>
-      ) : !summary ? (
+      ) : !summary || !alerts ? (
         <p role="status">Loading overview...</p>
       ) : (
         <>
-          <dl className="grid gap-4 sm:grid-cols-3">
+          <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {[
               ["Active items", summary.activeItems],
               ["Active categories", summary.categories],
               ["Active suppliers", summary.suppliers],
+              ["Low stock", alerts.lowStock],
+              ["Out of stock", alerts.outOfStock],
             ].map(([label, count]) => (
               <Card key={label}>
                 <dt className="text-sm text-muted-foreground">{label}</dt>
                 <dd className="mt-3 text-3xl font-semibold tracking-tight">
                   {count.toLocaleString()}
                 </dd>
+                {(label === "Low stock" || label === "Out of stock") && (
+                  <Link
+                    aria-label={`View items: ${label}`}
+                    className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline"
+                    href={href(
+                      `/items?stockStatus=${label === "Low stock" ? "low" : "out"}`,
+                    )}
+                  >
+                    View items<span className="sr-only">: {label}</span>
+                  </Link>
+                )}
               </Card>
             ))}
           </dl>
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
             <Card className="min-w-0">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold">

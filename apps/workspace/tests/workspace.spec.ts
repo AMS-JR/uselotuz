@@ -47,6 +47,22 @@ async function member(page: Page, activated = true, canManage = true) {
       json: [{ userId: user.id, role: canManage ? "OWNER" : "STAFF" }],
     }),
   );
+  await page.route("**/membership/members", (route) =>
+    route.fulfill({
+      json: [
+        {
+          userId: user.id,
+          name: user.name,
+          role: "OWNER",
+          active: true,
+          inventoryRole: "OWNER",
+        },
+      ],
+    }),
+  );
+  await page.route("**/membership/invitations", (route) =>
+    route.fulfill({ json: [] }),
+  );
   await page.route("**/products", (route) =>
     route.fulfill({
       json: [
@@ -456,5 +472,47 @@ test("a stored business preference from another user is ignored", async ({
   await page.goto("/");
   await expect(page.getByLabel("Business", { exact: true })).toHaveValue(
     business.id,
+  );
+});
+
+test("business cards and switching use each business membership role", async ({
+  page,
+}) => {
+  await member(page);
+  const owned = {
+    id: "10000000-0000-0000-0000-000000000002",
+    name: "My store",
+    role: "OWNER",
+  };
+  const employed = { ...business, role: "STAFF" };
+  await page.route("**/api/businesses", (route) =>
+    route.fulfill({ json: [employed, owned] }),
+  );
+  await page.route(`**/api/businesses/${business.id}`, (route) =>
+    route.fulfill({ json: { ...employed, canManage: false } }),
+  );
+  await page.route(`**/api/businesses/${owned.id}`, (route) =>
+    route.fulfill({ json: { ...owned, canManage: true } }),
+  );
+  await page.goto(`/businesses?businessId=${business.id}`);
+  await expect(page.getByText("Employee · Staff")).toBeVisible();
+  await expect(page.getByText("Your business · Owner")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Create business" }),
+  ).toBeVisible();
+  await page.goto(`/settings?businessId=${business.id}`);
+  await expect(page.getByText("Your business role: staff")).toBeVisible();
+  await expect(page.getByLabel("Business name", { exact: true })).toHaveCount(
+    0,
+  );
+  await page.getByLabel("Business", { exact: true }).selectOption(owned.id);
+  await expect(page.getByText("Your business role: owner")).toBeVisible();
+  await expect(page.getByLabel("Business name", { exact: true })).toHaveValue(
+    owned.name,
+  );
+  await page.getByLabel("Business", { exact: true }).selectOption(business.id);
+  await expect(page.getByText("Your business role: staff")).toBeVisible();
+  await expect(page.getByLabel("Business name", { exact: true })).toHaveCount(
+    0,
   );
 });

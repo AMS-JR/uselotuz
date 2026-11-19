@@ -125,6 +125,8 @@ test("an empty catalog loads zero counts and useful next actions", async ({
     "0",
     "0",
     "0",
+    "0",
+    "0",
   ]);
   await expect(
     page.getByText("Your catalog starts here", { exact: true }),
@@ -152,4 +154,26 @@ test("a missing summary endpoint stays a genuine service error instead of fake z
     page.getByText("Your catalog starts here", { exact: true }),
   ).toHaveCount(0);
   await expect(page.getByText("Active items", { exact: true })).toHaveCount(0);
+});
+
+test("stock alert counts are shown to staff", async ({ page }) => {
+  await mockInventory(page, { role: "STAFF" });
+  await page.route("**/inventory/stock/alerts**", (route) =>
+    route.fulfill({ json: { lowStock: 3, outOfStock: 2 } }),
+  );
+  await page.goto("/");
+  const cards = page.locator("dl").first();
+  await expect(cards).toContainText("Low stock");
+  await expect(cards).toContainText("Out of stock");
+  await expect(cards.locator("dd")).toHaveText(["0", "0", "0", "3", "2"]);
+});
+
+test("stock alert links open the matching Items filter", async ({ page }) => {
+  await mockInventory(page, { role: "STAFF" });
+  await page.goto("/");
+  await page.getByRole("link", { name: /View items: Low stock/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "Items", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Stock alert")).toHaveValue("low");
 });

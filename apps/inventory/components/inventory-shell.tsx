@@ -50,6 +50,9 @@ export function useInventory() {
 const navigation = [
   ["/", "Overview"],
   ["/items", "Items"],
+  ["/reorder", "Reorder List"],
+  ["/counts", "Stock Counts"],
+  ["/reports", "Reports"],
   ["/categories", "Categories"],
   ["/suppliers", "Suppliers"],
   ["/import-export", "Import / Export"],
@@ -335,7 +338,7 @@ export function InventoryShell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <header className="sticky top-0 z-20 border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-screen-2xl items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1920px] items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6">
           <Link
             href={visible ? href("/") : "/"}
             aria-label="Lotuz Inventory overview"
@@ -388,7 +391,7 @@ export function InventoryShell({ children }: { children: ReactNode }) {
       <div
         className={
           visible
-            ? "mx-auto max-w-screen-2xl lg:grid lg:grid-cols-[224px_minmax(0,1fr)]"
+            ? "mx-auto max-w-[1920px] lg:grid lg:grid-cols-[224px_minmax(0,1fr)]"
             : "mx-auto max-w-2xl"
         }
       >

@@ -18,7 +18,8 @@
     "test:e2e": "pnpm --filter @uselotuz/web test:e2e",
     "dev:workspace": "pnpm --filter @uselotuz/workspace dev",
     "build:workspace": "pnpm --filter @uselotuz/workspace build",
-    "test:workspace": "pnpm --filter @uselotuz/workspace test:e2e"
+    "test:workspace": "pnpm --filter @uselotuz/workspace test:e2e",
+    "test:postgres": "bash scripts/verify-postgres.sh"
   },
   "devDependencies": {
     "eslint": "^9.39.1",

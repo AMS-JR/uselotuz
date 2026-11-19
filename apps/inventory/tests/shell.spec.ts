@@ -425,3 +425,23 @@ test("pending business access shows loading only until authorized selection reso
   await expect(switcher.locator("option")).toHaveText(["Store", "Restaurant"]);
   await expect(page.getByRole("status")).toHaveCount(0);
 });
+
+test("switching businesses reloads the Inventory role and management controls", async ({
+  page,
+}) => {
+  await mockInventory(page, {
+    rolesByBusiness: { [A]: "STAFF", [B]: "OWNER" },
+  });
+  await page.goto(`/?businessId=${A}`);
+  await expect(
+    page.getByRole("link", { name: "Add item", exact: true }),
+  ).toHaveCount(0);
+  await page.getByLabel("Business", { exact: true }).selectOption(B);
+  await expect(
+    page.getByRole("link", { name: "Add item", exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Business", { exact: true }).selectOption(A);
+  await expect(
+    page.getByRole("link", { name: "Add item", exact: true }),
+  ).toHaveCount(0);
+});

@@ -21,7 +21,7 @@ public class BusinessService {
 
     @Transactional(readOnly = true)
     public List<BusinessView> list(UUID userId) {
-        return businesses.findForUser(userId).stream().map(b -> new BusinessView(b.id(), b.name())).toList();
+        return businesses.findForUser(userId).stream().map(b -> new BusinessView(b.getId(), b.getName(), b.getRole())).toList();
     }
 
     @Transactional
@@ -29,7 +29,7 @@ public class BusinessService {
         var business = businesses.saveAndFlush(new Business(UUID.randomUUID(), validName(name)));
         memberships.save(new Membership(business.id(), userId, "OWNER"));
         // Business creation deliberately has no dependency on Inventory or product entitlements.
-        return new BusinessView(business.id(), business.name());
+        return new BusinessView(business.id(), business.name(), "OWNER");
     }
 
     @Transactional(readOnly = true)
@@ -76,7 +76,7 @@ public class BusinessService {
         return name.strip();
     }
 
-    public record BusinessView(UUID id, String name) {}
+    public record BusinessView(UUID id, String name, String role) {}
     public record Details(UUID id, String name, String role, boolean canManage) {}
     public record MemberView(UUID userId, String role) {}
 }

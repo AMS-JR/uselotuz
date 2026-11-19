@@ -19,7 +19,7 @@ import {
 } from "@uselotuz/ui";
 import { branding } from "../lib/branding";
 import { ApiError, loginUrl, mutate, read } from "../lib/api";
-export type Business = { id: string; name: string };
+export type Business = { id: string; name: string; role: string };
 export type Details = Business & { role: string; canManage: boolean };
 type User = AccountProfile & { id: string };
 type WorkspaceContext = {
@@ -55,6 +55,11 @@ function preference(user: string, value?: string | null) {
   return null;
 }
 export function WorkspaceShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  if (pathname === "/accept-invitation") return <>{children}</>;
+  return <AuthenticatedWorkspaceShell>{children}</AuthenticatedWorkspaceShell>;
+}
+function AuthenticatedWorkspaceShell({ children }: { children: ReactNode }) {
   const router = useRouter(),
     pathname = usePathname(),
     params = useSearchParams();
@@ -284,7 +289,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
         Skip to content
       </a>
       <header className="sticky top-0 z-20 border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1920px] flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
           <Link
             href={href("/")}
             aria-label="Lotuz Workspace overview"
@@ -339,7 +344,7 @@ export function WorkspaceShell({ children }: { children: ReactNode }) {
       <div
         className={
           ready
-            ? "mx-auto max-w-screen-2xl lg:grid lg:grid-cols-[224px_minmax(0,1fr)]"
+            ? "mx-auto max-w-[1920px] lg:grid lg:grid-cols-[224px_minmax(0,1fr)]"
             : "mx-auto max-w-2xl"
         }
       >

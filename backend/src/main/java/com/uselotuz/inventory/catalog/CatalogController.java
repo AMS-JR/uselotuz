@@ -15,15 +15,19 @@ class CatalogController {
     private final CatalogService catalog;
     private final CatalogCsvService csv;
     private final IdentityService identities;
-    CatalogController(CatalogService catalog, CatalogCsvService csv, IdentityService identities) { this.catalog=catalog; this.csv=csv; this.identities=identities; }
+    private final StockService stock;
+    CatalogController(CatalogService catalog, CatalogCsvService csv, IdentityService identities, StockService stock) { this.catalog=catalog; this.csv=csv; this.identities=identities; this.stock=stock; }
     @GetMapping("/summary") Summary summary(@PathVariable UUID businessId, @AuthenticationPrincipal OidcUser user) {
         return catalog.summary(identities.requireUser(user),businessId);
     }
     @GetMapping("/items") ItemPage list(@PathVariable UUID businessId, @AuthenticationPrincipal OidcUser user,
             @RequestParam(defaultValue="") String q, @RequestParam(required=false) String type,
             @RequestParam(required=false) UUID categoryId, @RequestParam(defaultValue="active") String status,
-            @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="25") int size) {
-        return catalog.list(identities.requireUser(user),businessId,q,type,categoryId,status,page,size);
+            @RequestParam(defaultValue="0") int page, @RequestParam(defaultValue="25") int size,
+            @RequestParam(required=false) String stockStatus, @RequestParam(required=false) UUID locationId) {
+        UUID actor=identities.requireUser(user);
+        if(stockStatus!=null) { if(!Set.of("low","out").contains(stockStatus)) throw CatalogService.bad("Invalid stock status"); stock.validateLocation(actor,businessId,locationId); }
+        return catalog.list(actor,businessId,q,type,categoryId,status,page,size,stockStatus,locationId);
     }
     @GetMapping("/items/{id}") ItemView item(@PathVariable UUID businessId, @PathVariable UUID id, @AuthenticationPrincipal OidcUser user) {
         return catalog.item(identities.requireUser(user),businessId,id);

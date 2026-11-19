@@ -35,7 +35,7 @@ class AccessIntegrationTest {
         return oidcLogin().idToken(t -> t.claim("iss", "https://issuer.example").subject("alice"));
     }
     @BeforeEach void seed() {
-        for (String table : new String[]{"inventory_item", "inventory_category", "inventory_supplier", "inventory_location", "product_access", "product_entitlement", "business_membership", "business", "external_identity", "platform_user"})
+        for (String table : new String[]{"inventory_reorder_plan", "inventory_stock_threshold", "inventory_stock_movement", "inventory_item", "inventory_category", "inventory_supplier", "inventory_location", "product_access", "product_entitlement", "business_membership", "business", "external_identity", "platform_user"})
             db.update("delete from " + table);
         db.update("insert into platform_user(id,display_name) values (?,?),(?,?)", ALICE, "Alice", BOB, "Bob");
         db.update("insert into external_identity(id,user_id,issuer,subject) values (?,?,?,?)", UUID.randomUUID(), ALICE, "https://issuer.example", "alice");
@@ -59,6 +59,22 @@ class AccessIntegrationTest {
     @Test void staffCanReadTheirOwnLocation() throws Exception {
         mvc.perform(get("/api/businesses/" + A + "/inventory").with(alice())).andExpect(status().isOk())
             .andExpect(jsonPath("$.location.name").value("Store")).andExpect(jsonPath("$.role").value("STAFF"));
+    }
+    @Test void stockIsTenantScopedAndStaffCannotInitialize() throws Exception {
+        UUID item=UUID.randomUUID();
+        UUID location=db.queryForObject("select id from inventory_location where business_id=?",UUID.class,A);
+        UUID otherLocation=db.queryForObject("select id from inventory_location where business_id=?",UUID.class,B);
+        db.update("insert into inventory_item(id,business_id,name,item_type,unit,archived,created_at,updated_at) values (?,?,'Rice','PRODUCT','PIECE',false,current_timestamp,current_timestamp)",item,A);
+        String path="/api/businesses/"+A+"/inventory/stock";
+        String payload="{\"locationId\":\""+location+"\",\"quantity\":\"0\"}";
+        mvc.perform(get(path).param("itemId",item.toString()).param("locationId",location.toString()).with(alice())).andExpect(status().isOk()).andExpect(jsonPath("$.quantity").doesNotExist());
+        mvc.perform(post(path+"/"+item+"/opening").with(alice()).with(csrf()).contentType("application/json").content(payload)).andExpect(status().isForbidden());
+        db.update("update product_access set role='OWNER' where user_id=?",ALICE);
+        mvc.perform(post(path+"/"+item+"/opening").with(alice()).with(csrf()).contentType("application/json").content("{\"locationId\":\""+otherLocation+"\",\"quantity\":\"1\"}")).andExpect(status().isBadRequest());
+        mvc.perform(post(path+"/"+item+"/opening").with(alice()).with(csrf()).contentType("application/json").content(payload)).andExpect(status().isCreated()).andExpect(jsonPath("$.quantity").value("0"));
+        mvc.perform(post(path+"/"+item+"/opening").with(alice()).with(csrf()).contentType("application/json").content(payload)).andExpect(status().isConflict());
+        mvc.perform(get(path).param("itemId",item.toString()).param("locationId",location.toString()).with(alice())).andExpect(jsonPath("$.quantity").value("0.000000"));
+        mvc.perform(get("/api/businesses/"+B+"/inventory/stock").param("itemId",item.toString()).param("locationId",otherLocation.toString()).with(alice())).andExpect(status().isForbidden());
     }
     @Test void absentProductGrantDenied() throws Exception {
         db.update("delete from product_access where user_id=?", ALICE);
@@ -146,6 +162,39 @@ class AccessIntegrationTest {
         }
         mvc.perform(get("/api/businesses/" + created + "/products").with(alice()))
                 .andExpect(jsonPath("$[0].activated").value(false)).andExpect(jsonPath("$[0].accessible").value(false));
+    }
+
+    @Autowired com.uselotuz.business.MembershipManagementService membershipManagement;
+
+    @ParameterizedTest @ValueSource(strings = {"STAFF", "ADMIN"})
+    void employeeCanCreateOwnBusinessWithoutChangingExistingAccess(String employeeRole) throws Exception {
+        db.update("update business_membership set role=? where business_id=? and user_id=?", employeeRole, A, ALICE);
+        db.update("update product_access set role=? where business_id=? and user_id=? and product_code='inventory'", employeeRole, A, ALICE);
+        db.update("insert into business_membership(business_id,user_id,role,active) values (?,?,'OWNER',true)", A, BOB);
+        var response = mvc.perform(post("/api/businesses").with(alice()).with(csrf()).contentType("application/json").content("{\"name\":\"My own store\"}"))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.role").value("OWNER")).andReturn();
+        UUID created = UUID.fromString(com.jayway.jsonpath.JsonPath.read(response.getResponse().getContentAsString(), "$.id"));
+        mvc.perform(get("/api/businesses").with(alice())).andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == '"+A+"')].role").value(org.hamcrest.Matchers.hasItem(employeeRole)))
+                .andExpect(jsonPath("$[?(@.id == '"+created+"')].role").value(org.hamcrest.Matchers.hasItem("OWNER")));
+        mvc.perform(get("/api/businesses/"+A).with(alice())).andExpect(jsonPath("$.role").value(employeeRole));
+        mvc.perform(get("/api/businesses/"+created).with(alice())).andExpect(jsonPath("$.role").value("OWNER"));
+        mvc.perform(get("/api/businesses/"+A+"/membership/invitations").with(alice())).andExpect(status().isForbidden());
+        mvc.perform(get("/api/businesses/"+B+"/members").with(alice())).andExpect(status().isForbidden());
+        mvc.perform(get("/api/businesses/"+B+"/membership/invitations").with(alice())).andExpect(status().isForbidden());
+        mvc.perform(get("/api/businesses/"+B+"/products").with(alice())).andExpect(status().isForbidden());
+        mvc.perform(get("/api/businesses/"+created+"/inventory").with(alice())).andExpect(status().isForbidden());
+        org.junit.jupiter.api.Assertions.assertEquals(employeeRole, db.queryForObject("select role from product_access where business_id=? and user_id=? and product_code='inventory'", String.class, A, ALICE));
+        org.junit.jupiter.api.Assertions.assertEquals(0, db.queryForObject("select count(*) from product_entitlement where business_id=?", Integer.class, created));
+        org.junit.jupiter.api.Assertions.assertEquals(0, db.queryForObject("select count(*) from product_access where business_id=?", Integer.class, created));
+        db.update("insert into product_entitlement(business_id,product_code,active) values (?,'inventory',true)",created);
+        db.update("insert into product_access(business_id,user_id,product_code,role,active) values (?,?,'inventory','OWNER',true)",created,ALICE);
+        membershipManagement.update(BOB,A,ALICE,employeeRole,false,false);
+        mvc.perform(get("/api/businesses/"+A).with(alice())).andExpect(status().isForbidden());
+        mvc.perform(get("/api/businesses/"+A+"/inventory").with(alice())).andExpect(status().isForbidden());
+        mvc.perform(get("/api/businesses/"+created).with(alice())).andExpect(status().isOk()).andExpect(jsonPath("$.role").value("OWNER"));
+        mvc.perform(get("/api/businesses/"+created+"/products").with(alice())).andExpect(jsonPath("$[0].accessible").value(true));
+        mvc.perform(get("/api/businesses").with(alice())).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(created.toString()));
     }
 
     @Test void businessCreationRequiresAuthenticationCsrfAndValidInput() throws Exception {

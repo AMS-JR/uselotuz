@@ -22,7 +22,7 @@ class IdentityController {
     }
     @GetMapping("/api/me") UserView me(@AuthenticationPrincipal OidcUser user) {
         return new UserView(identities.requireUser(user), user.getFullName() == null || user.getFullName().isBlank() ? "Lotuz user" : user.getFullName(),
-                user.getEmail(), profilePicture(user.getClaimAsString("picture")));
+                user.getEmail(), profilePicture(user.getClaimAsString("picture")), Boolean.TRUE.equals(user.getEmailVerified()));
     }
     private static String profilePicture(String value) {
         try {
@@ -30,5 +30,5 @@ class IdentityController {
             return "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost()!=null && uri.getUserInfo()==null ? uri.toASCIIString() : null;
         } catch (RuntimeException exception) { return null; }
     }
-    record UserView(UUID id, String name, String email, String picture) {}
+    record UserView(UUID id, String name, String email, String picture, boolean emailVerified) {}
 }

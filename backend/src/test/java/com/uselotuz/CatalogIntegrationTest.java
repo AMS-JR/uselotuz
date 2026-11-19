@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static com.uselotuz.AccessIntegrationTest.*;
 
 import java.util.UUID;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,7 +31,7 @@ class CatalogIntegrationTest {
     @org.springframework.test.context.bean.override.mockito.MockitoBean ClientRegistrationRepository registrations;
     String base() { return "/api/businesses/"+A+"/inventory/catalog"; }
     @BeforeEach void seed() {
-        for (String table : new String[]{"inventory_item", "inventory_category", "inventory_supplier", "inventory_location", "product_access", "product_entitlement", "business_membership", "business", "external_identity", "platform_user"})
+        for (String table : new String[]{"inventory_reorder_plan", "inventory_stock_threshold", "inventory_stock_movement", "inventory_item", "inventory_category", "inventory_supplier", "inventory_location", "product_access", "product_entitlement", "business_membership", "business", "external_identity", "platform_user"})
             db.update("delete from " + table);
         db.update("insert into platform_user(id,display_name) values (?,?),(?,?)", ALICE, "Alice", BOB, "Bob");
         db.update("insert into external_identity(id,user_id,issuer,subject) values (?,?,?,?)", UUID.randomUUID(), ALICE, "https://issuer.example", "alice");
@@ -49,6 +50,60 @@ class CatalogIntegrationTest {
     }
     String item(String name, String sku) { return "{\"name\":\""+name+"\",\"sku\":\""+sku+"\",\"itemType\":\"PRODUCT\",\"unit\":\"PIECE\"}"; }
     MockMultipartFile csv(String rows) { return new MockMultipartFile("file","catalog.csv","text/csv",(CatalogCsvService.HEADER+"\r\n"+rows).getBytes(StandardCharsets.UTF_8)); }
+    @Test void reportingUsesLedgerFiltersAndTenantAuthorization() throws Exception {
+        manager(); String id=create("items",item("Rice","001")); create("items",item("Uncounted","002"));
+        UUID location=db.queryForObject("select id from inventory_location where business_id=?",UUID.class,A);
+        db.update("insert into inventory_stock_movement(id,business_id,item_id,location_id,movement_type,quantity,unit,created_by,created_at) values (?,?,?,?,'OPENING',0,'PIECE',?,CURRENT_TIMESTAMP)",UUID.randomUUID(),A,UUID.fromString(id),location,ALICE);
+        db.update("update product_access set role='STAFF' where business_id=? and user_id=?",A,ALICE);
+        String report="/api/businesses/"+A+"/inventory/reports";
+        mvc.perform(get(report+"/stock").param("locationId",location.toString()).param("size","1").with(alice())).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(2)).andExpect(jsonPath("$.items.length()").value(1)).andExpect(jsonPath("$.items[0].stockStatus").value("OUT_OF_STOCK"));
+        mvc.perform(get(report+"/stock").param("locationId",location.toString()).param("status","NOT_ESTABLISHED").with(alice())).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1));
+        mvc.perform(get(report+"/movements").param("locationId",location.toString()).param("movementType","OPENING").with(alice())).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].sku").value("001"));
+        mvc.perform(get(report+"/movements").param("locationId",location.toString()).param("from","2026-02-02").param("to","2026-01-01").with(alice())).andExpect(status().isBadRequest());
+        mvc.perform(get(report+"/stock").param("locationId",location.toString()).param("size","101").with(alice())).andExpect(status().isBadRequest());
+        var export=mvc.perform(get(report+"/stock/export").param("locationId",location.toString()).with(alice())).andExpect(request().asyncStarted()).andReturn();
+        String csv=mvc.perform(asyncDispatch(export)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertTrue(csv.contains("\"'001\""));
+        assertTrue(csv.contains(",0,"));
+        mvc.perform(get(report+"/summary").param("locationId",location.toString()).with(alice())).andExpect(status().isOk()).andExpect(jsonPath("$.totalActiveItems").value(2)).andExpect(jsonPath("$.outOfStockItems").value(1));
+        manager(); String flour=create("items","{\"name\":\"Flour\",\"sku\":\"F01\",\"itemType\":\"INGREDIENT\",\"unit\":\"KILOGRAM\"}");
+        db.update("insert into inventory_stock_movement(id,business_id,item_id,location_id,movement_type,quantity,unit,created_by,created_at) values (?,?,?,?,'OPENING',2.5,'KILOGRAM',?,CURRENT_TIMESTAMP)",UUID.randomUUID(),A,UUID.fromString(flour),location,ALICE);
+        db.update("insert into inventory_stock_movement(id,business_id,item_id,location_id,movement_type,quantity,unit,created_by,created_at,adjustment_reason,idempotency_key) values (?,?,?,?,'ADJUSTMENT',-1.25,'KILOGRAM',?,CURRENT_TIMESTAMP,'Count',?)",UUID.randomUUID(),A,UUID.fromString(flour),location,ALICE,UUID.randomUUID());
+        db.update("insert into inventory_stock_threshold(id,business_id,item_id,location_id,quantity) values (?,?,?,?,1.25)",UUID.randomUUID(),A,UUID.fromString(flour),location);
+        db.update("update product_access set role='STAFF' where business_id=? and user_id=?",A,ALICE);
+        mvc.perform(get(report+"/stock").param("locationId",location.toString()).param("status","LOW_STOCK").param("type","INGREDIENT").param("q","f01").with(alice())).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].currentStock").value("1.250000"));
+        mvc.perform(get(report+"/movements").param("locationId",location.toString()).param("movementType","ADJUSTMENT").param("q","flour").with(alice())).andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.items[0].reason").value("Count"));
+        mvc.perform(get(report+"/stock").param("locationId",location.toString())).andExpect(status().isUnauthorized());
+        mvc.perform(get(report.replace(A.toString(),B.toString())+"/stock").param("locationId",location.toString()).with(alice())).andExpect(status().isForbidden());
+    }
+    @Test void reportCsvFormatsQuantitiesWithoutChangingPrecisionOrSafety() throws Exception {
+        manager();
+        String rice=create("items",item("=Rice","001"));
+        String flour=create("items","{\"name\":\"Flour\",\"sku\":\"002\",\"itemType\":\"INGREDIENT\",\"unit\":\"KILOGRAM\"}");
+        create("items",item("Uncounted","003"));
+        UUID location=db.queryForObject("select id from inventory_location where business_id=?",UUID.class,A);
+        for (Object[] entry : new Object[][] {{rice,new BigDecimal("15"),"PIECE"},{flour,new BigDecimal("3"),"KILOGRAM"}}) {
+            db.update("insert into inventory_stock_movement(id,business_id,item_id,location_id,movement_type,quantity,unit,created_by,created_at) values (?,?,?,?,'OPENING',?,?,?,CURRENT_TIMESTAMP)",UUID.randomUUID(),A,UUID.fromString((String)entry[0]),location,entry[1],entry[2],ALICE);
+        }
+        db.update("insert into inventory_stock_movement(id,business_id,item_id,location_id,movement_type,quantity,unit,created_by,created_at,adjustment_reason,idempotency_key) values (?,?,?,?,'ADJUSTMENT',-0.5,'KILOGRAM',?,CURRENT_TIMESTAMP,'=Formula',?)",UUID.randomUUID(),A,UUID.fromString(flour),location,ALICE,UUID.randomUUID());
+        db.update("insert into inventory_stock_threshold(id,business_id,item_id,location_id,quantity) values (?,?,?,?,?)",UUID.randomUUID(),A,UUID.fromString(rice),location,new BigDecimal("10"));
+        db.update("insert into inventory_stock_threshold(id,business_id,item_id,location_id,quantity) values (?,?,?,?,?)",UUID.randomUUID(),A,UUID.fromString(flour),location,new BigDecimal("2.500000"));
+        String report="/api/businesses/"+A+"/inventory/reports";
+        var request=mvc.perform(get(report+"/stock/export").param("locationId",location.toString()).with(alice())).andExpect(request().asyncStarted()).andReturn();
+        String stockCsv=mvc.perform(asyncDispatch(request)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertTrue(stockCsv.startsWith("item,sku,category,item_type,unit,current_stock,minimum_stock,stock_status\r\n"));
+        assertTrue(stockCsv.contains("\"'=Rice\",\"'001\",\"\",\"PRODUCT\",\"PIECE\",15,10"));
+        assertTrue(stockCsv.contains("\"Flour\",\"'002\",\"\",\"INGREDIENT\",\"KILOGRAM\",2.5,2.5"));
+        assertTrue(stockCsv.contains("\"Uncounted\",\"'003\",\"\",\"PRODUCT\",\"PIECE\",\"\",\"\""));
+        var movements=mvc.perform(get(report+"/movements/export").param("locationId",location.toString()).param("q","flour").with(alice())).andExpect(request().asyncStarted()).andReturn();
+        String movementCsv=mvc.perform(asyncDispatch(movements)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertTrue(movementCsv.startsWith("date,item,sku,movement_type,quantity_change,unit,reason\r\n"));
+        assertTrue(movementCsv.contains("\"Flour\",\"'002\",\"OPENING\",3,"));
+        assertTrue(movementCsv.contains("\"Flour\",\"'002\",\"ADJUSTMENT\",-0.5,\"KILOGRAM\",\"'=Formula\""));
+        assertFalse(movementCsv.contains("Rice"));
+        assertFalse(stockCsv.contains(".000000"));
+        assertFalse(movementCsv.contains(".000000"));
+    }
     @Test void catalogCrudSearchFilterArchiveAndTimestamps() throws Exception {
         manager(); String id=create("items",item("Rice","001"));
         mvc.perform(get(base()+"/items/"+id).with(alice())).andExpect(jsonPath("$.sku").value("001"))

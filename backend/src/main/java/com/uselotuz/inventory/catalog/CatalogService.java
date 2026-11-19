@@ -17,8 +17,10 @@ public class CatalogService {
     private final ItemRepository items;
     private final CategoryRepository categories;
     private final SupplierRepository suppliers;
-    CatalogService(AccessService access, ItemRepository items, CategoryRepository categories, SupplierRepository suppliers) {
-        this.access=access; this.items=items; this.categories=categories; this.suppliers=suppliers;
+    private final StockMovementRepository movements;
+    private final StockThresholdRepository thresholds;
+    CatalogService(AccessService access, ItemRepository items, CategoryRepository categories, SupplierRepository suppliers, StockMovementRepository movements, StockThresholdRepository thresholds) {
+        this.access=access; this.items=items; this.categories=categories; this.suppliers=suppliers; this.movements=movements; this.thresholds=thresholds;
     }
     void authorize(UUID user, UUID business, boolean manage) {
         access.require(user,business,"inventory",manage ? AccessService.Permission.MANAGE : AccessService.Permission.VIEW);
@@ -42,14 +44,15 @@ public class CatalogService {
                 items.findTop6ByBusinessIdAndArchivedFalseOrderByUpdatedAtDescIdAsc(business).stream().map(CatalogDtos::view).toList());
     }
     @Transactional(readOnly=true)
-    public ItemPage list(UUID user, UUID business, String q, String type, UUID category, String status, int page, int size) {
+    public ItemPage list(UUID user, UUID business, String q, String type, UUID category, String status, int page, int size, String stockStatus, UUID location) {
         authorize(user,business,false);
         if (page<0 || size<1 || size>100 || page>100000) throw bad("Invalid page or size (1-100)");
         Boolean archived=switch(status) { case "active" -> false; case "archived" -> true; case "all" -> null; default -> throw bad("Invalid status"); };
         if (type!=null && !Set.of("PRODUCT","INGREDIENT").contains(type)) throw bad("Invalid item type");
         String query=text(q,200,false,"Search");
-        var result=items.search(business,archived,type,category,query==null ? "" : query.toLowerCase(Locale.ROOT),
-                PageRequest.of(page,size,Sort.by("name").and(Sort.by("id"))));
+        var pageable=PageRequest.of(page,size,Sort.by("name").and(Sort.by("id")));
+        var result=stockStatus==null ? items.search(business,archived,type,category,query==null ? "" : query.toLowerCase(Locale.ROOT),pageable)
+            : items.searchAlerts(business,archived,type,category,query==null ? "" : query.toLowerCase(Locale.ROOT),location,stockStatus,pageable);
         return new ItemPage(result.stream().map(CatalogDtos::view).toList(),result.getTotalElements(),page,size);
     }
     @Transactional(readOnly=true)
@@ -71,6 +74,7 @@ public class CatalogService {
         if (item.barcode!=null && items.existsByBusinessIdAndBarcodeAndIdNot(business,item.barcode,item.id)) throw conflict("Barcode already exists in this business");
         if (!Set.of("PRODUCT","INGREDIENT").contains(Objects.toString(input.itemType(),""))) throw bad("Item type must be PRODUCT or INGREDIENT");
         if (input.unit()==null) throw bad("Unit is required");
+        if (item.unit!=null && item.unit!=input.unit() && (movements.existsByBusinessIdAndItemId(business,item.id) || thresholds.existsByBusinessIdAndItemId(business,item.id))) throw conflict("Unit cannot be changed while stock or a threshold exists");
         if (input.categoryId()!=null && categories.lock(business,input.categoryId()).filter(c -> !c.archived).isEmpty()) throw bad("Category must be active and belong to this business");
         if (input.supplierId()!=null && suppliers.lock(business,input.supplierId()).filter(s -> !s.archived).isEmpty()) throw bad("Supplier must be active and belong to this business");
         item.itemType=input.itemType(); item.unit=input.unit(); item.categoryId=input.categoryId(); item.supplierId=input.supplierId();

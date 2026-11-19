@@ -14,9 +14,17 @@ export function CatalogPage({
       key={`${inventory.businessId}:${section}`}
       businessId={inventory.businessId}
       role={inventory.role}
+      currentUser={inventory.user}
+      location={inventory.location}
       onAccessLost={inventory.onAccessLost}
       section={section}
       addInitially={section === "items" && params.get("action") === "add"}
+      initialStockFilter={
+        section === "items" &&
+        ["low", "out"].includes(params.get("stockStatus") ?? "")
+          ? (params.get("stockStatus") ?? "")
+          : ""
+      }
     />
   );
 }

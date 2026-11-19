@@ -83,7 +83,7 @@ Folders are illustrative, not a requirement to create empty directories. Use a f
 - `apps/web`: brand homepage, product discovery, links, public information; no server-only Next.js dependency while using static export.
 - Product frontends: independently deployable and product-specific user experiences, sharing approved UI components and API conventions.
 - Branding is application-owned: each app configures its own `lib/branding.ts` and serves its own `public/brand/` assets. Shared `HeaderBrand` provides presentation only, with explicit logo/name/accessibility inputs and no default marketing identity. Workspace and Inventory currently hold independent copies of the approved lotus; future products may use different icons without changing other apps.
-- Implemented shared platform modules: `identity`, `business`, `access`. The first product module is `inventory`, owning its access context, default location and Phase 2 catalog (items, categories, suppliers, units and CSV). See `INVENTORY_PHASE_2.md`; stock remains deferred. Future product modules are added only when their development is approved.
+- Implemented shared platform modules: `identity`, `business`, `access`. The first product module is `inventory`, owning its access context, default location, catalog and movement-based stock. See `INVENTORY_PHASE_2.md` for the historical catalog milestone and `INVENTORY_STOCK.md` for current stock behavior. Future product modules are added only when their development is approved.
 - Each module owns its persistence. Other modules use explicit application interfaces, not repositories or entities. Future product connections use authorized APIs/events rather than shared-table access; no broker or connector infrastructure is implemented in Phase 1.
 - Frontends call the backend over HTTPS; backend enforces business rules and permissions. Do not rely on frontend access checks for security.
 
@@ -97,7 +97,9 @@ the single-process foundation, using host-scoped HTTP-only cookies, CSRF protect
 and exact configured Inventory/Workspace CORS origins. Deployment/session persistence remains a later decision.
 A single login does not automatically imply access to any business or product.
 Workspace is an optional central administration/navigation frontend. Business creation
-adds an OWNER membership but no products. Trusted operators approve product activation;
+adds an OWNER membership but no products, regardless of the user's roles in other
+businesses. Membership roles, entitlements, and product grants are scoped independently
+to each business; revoking one membership does not revoke another. Trusted operators approve product activation;
 Inventory provisioning is transactional and idempotent. No duplicate tenant/identity tables
 or customer entitlement-grant endpoint are added. See `AUTH0_WORKSPACE.md` for contracts,
 Auth0 plan limitations, safe redirects, shared sessions and production proxy requirements.
@@ -140,3 +142,11 @@ See `PRODUCT_ROADMAP.md` for what to build and when; see `CODING_STANDARDS.md` f
 - Backend host and managed PostgreSQL provider
 - Storage, payment integration and monitoring choices
 - Whether/when Inventory requires server-rendered Next.js features
+
+Workspace membership management uses the existing Auth0 identity, business membership,
+entitlement and product-grant model. Owners issue short-lived, single-use invitations
+bound to verified email addresses; only token hashes are stored. Inventory access is an
+explicit grant and does not imply access to any other product. Membership changes and
+invitation acceptance serialize on the business row; all permissions are enforced by
+the backend. Invitation delivery is currently manual; production email delivery and
+rate limiting remain operational work. See `AUTH0_WORKSPACE.md` for the lifecycle.

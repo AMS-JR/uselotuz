@@ -107,7 +107,7 @@ export function CatalogTransfer() {
         </p>
       )}
       {notice && <p role="status">{notice}</p>}
-      <Card>
+      <Card className="max-w-4xl">
         <h3 className="text-lg font-semibold">Catalog files</h3>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Create-only import, up to 1,000 items and 1 MiB. Existing

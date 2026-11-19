@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ButtonLink, Card } from "@uselotuz/ui";
 import { ApiError, mutate, read } from "../lib/api";
 import { useWorkspace, type Business } from "./workspace-shell";
+import { MembershipManagement } from "./membership-management";
 type Member = { userId: string; role: string };
 type Product = {
   code: string;
@@ -226,6 +227,15 @@ export function BusinessPanel({ section }: { section: Section }) {
                   <h2 className="break-words text-lg font-semibold">
                     {business.name}
                   </h2>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {business.role === "OWNER"
+                      ? "Your business · Owner"
+                      : business.role === "ADMIN"
+                        ? "Employee · Admin"
+                        : business.role === "STAFF"
+                          ? "Employee · Staff"
+                          : "Role unavailable"}
+                  </p>
                   <Link
                     href={`/settings?${new URLSearchParams({ businessId: business.id })}`}
                     className="mt-3 inline-flex min-h-11 items-center text-sm text-primary"
@@ -361,7 +371,10 @@ export function BusinessPanel({ section }: { section: Section }) {
               </div>
             </Card>
           )}
-          {section === "members" && (
+          {section === "members" && details.role === "OWNER" && (
+            <MembershipManagement businessId={details.id} userId={user.id} />
+          )}
+          {section === "members" && details.role !== "OWNER" && (
             <Card>
               <h2 className="text-xl font-semibold">Membership</h2>
               <p className="mt-2 text-sm text-muted-foreground">

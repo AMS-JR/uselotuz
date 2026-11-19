@@ -1,6 +1,6 @@
 -- Trusted operator only. Never expose this script or database credentials through a customer API.
 -- Required psql variables: business_id and user_id (an ACTIVE business OWNER).
--- Repeated/concurrent calls preserve existing product roles, revocations, location IDs and names.
+-- Repeated/concurrent calls prese  rve existing product roles, revocations, location IDs and names.
 \set ON_ERROR_STOP on
 BEGIN;
 -- Serialize activation for this business, including concurrent operator calls.

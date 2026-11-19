@@ -43,7 +43,7 @@ Signup/login creates a user mapping only, not a business, grant or entitlement.
 | `POST /api/auth/logout?app=workspace`                      | CSRF-protected local logout; 204 plus exposed `Location` for top-level provider logout   |
 | `POST /api/auth/logout`                                    | Preserved Phase 1 local-only 204 logout contract                                         |
 | `GET /api/me`                                              | Current mapped user ID and display name                                                  |
-| `GET /api/businesses`                                      | Current user's active memberships only                                                   |
+| `GET /api/businesses`                                      | Current user's active memberships and role for each business                            |
 | `POST /api/businesses`                                     | Creates business and OWNER membership in one transaction; body `{"name":"Corner store"}` |
 | `GET /api/businesses/{id}`                                 | Active member; own business role and management capability                               |
 | `PATCH /api/businesses/{id}`                               | Business OWNER/ADMIN; validates name, requires CSRF                                      |
@@ -51,7 +51,14 @@ Signup/login creates a user mapping only, not a business, grant or entitlement.
 | `GET /api/businesses/{id}/products`                        | Member; activation status and current user's product accessibility                       |
 | Existing Inventory GET/PATCH routes                        | Membership + active entitlement + active product grant + product permission              |
 
-Creating a business activates **no products** and creates no Inventory location.
+Any authenticated user can create a separate business, including a Staff or Admin
+member of another business. Creation gives that user an OWNER membership in the new
+business only; existing memberships and grants are unchanged. Each business has its
+own membership roles, product entitlements and product grants. Creating a business
+activates **no products** and creates no Inventory location or product grant. Revoking
+membership in one business does not revoke access to another. Workspace labels each
+business with the current user's role, and both Workspace and Inventory reload access
+for the selected business. An active membership alone never grants Inventory access.
 The server chooses the creator's OWNER membership from the authenticated identity;
 request bodies cannot choose another owner or grant a product entitlement.
 Business management uses business roles; Inventory operations use product roles.
@@ -342,10 +349,60 @@ authentication infrastructure. Stock, POS, billing and production deployment rem
 
 ## Workspace navigation and profile presentation
 
-Workspace now uses persistent responsive navigation with `/` (Overview), `/products`, `/businesses`, `/members` and `/settings`. These pages use the existing business, membership and product-access APIs. Business creation does not activate products. Owner/Admin retain existing business-renaming access; Staff see read-only settings and only backend-authorized membership information. No billing, invitation or account-management features are introduced.
+Workspace now uses persistent responsive navigation with `/` (Overview), `/products`, `/businesses`, `/members` and `/settings`. These pages use the existing business, membership and product-access APIs. Business creation does not activate products. Owner/Admin retain existing business-renaming access; Staff see read-only settings and only backend-authorized membership information. Owner-managed employee invitations and Inventory grants are described below. Billing and other account-management features remain out of scope.
 
 An explicit `businessId` deep link takes precedence over the last accessible selection, followed by a deterministic UUID default. Workspace stores only a business UUID under `lotuz.workspace.business.<platformUserId>`; Inventory keeps its own preference. Backend membership and entitlement checks remain authoritative. Invalid or revoked selections fall back to another accessible business or the existing empty state. Storage failures do not block access.
 
 Both applications use the shared avatar disclosure. `/api/me` exposes only platform ID and OIDC display name, optional email and a validated HTTPS picture URL. It never exposes tokens or arbitrary claims. Profile images load directly with no referrer; unavailable or broken images show initials. Logout remains an app-owned CSRF-protected backend request using the existing shared session.
 
 Manual acceptance with the real Auth0 tenant is still required: confirm available name/email/picture claims, initials and failed-image fallback, keyboard dropdown controls, login/logout from both apps, single/multiple-business selection, explicit Workspace-to-Inventory links, and revoked membership/entitlement behavior. Automated browser fixtures do not verify live Auth0 or production subdomain cookies.
+
+## Membership invitations and Inventory access
+
+An active business Owner manages employee memberships in **Workspace → Membership**.
+The Owner enters the employee's email, chooses Admin or Staff, and explicitly chooses
+whether to grant Inventory access. Inventory must already be enabled for the business.
+Business membership alone never grants a product. Inventory Admins can manage Inventory;
+Inventory Staff have read-only Inventory access. No other product grant is created.
+Owners can change an employee's role or Inventory grant, revoke pending invitations,
+and deactivate an employee. Deactivation revokes all product grants. Owner memberships
+cannot be changed by this workflow, protecting the last active Owner. Admins and Staff
+cannot manage memberships through these endpoints.
+
+Invitation links are shown once to the Owner for private delivery; no email is sent.
+The random secret is stored only as a hash on the server, expires after seven days,
+and can be used once. The recipient opens the link, signs in through Auth0, and accepts
+with an Auth0 **verified** email matching the invitation (ignoring case and surrounding
+whitespace). Email aliases, including different dot or plus variants, are distinct and
+must not be substituted. The acceptance page checks
+`emailVerified` from the current authenticated session and displays the signed-in email.
+An email verified after login may require signing out and signing back in to refresh the
+session claims. If signed in to a different account, use “Sign out to use another
+account,” reopen the invitation link and sign in with the invited address. This is a status
+check only; the backend independently enforces verified
+email and invitation validity. The link's fragment is removed
+from the address bar and kept in the tab's session storage across sign-in. Share links
+only with the intended recipient. A lost link requires revoking and creating a new
+invitation. A malformed link is rejected before sign-in or submission; ask the Owner
+to revoke it and create a fresh invitation. A deactivated employee can be invited again; other prior product grants
+remain revoked. Production delivery requires a properly configured mail provider,
+secure delivery, operational monitoring and appropriate rate limiting; none is included.
+
+For local testing with the existing Inventory Test Store: start the normal backend,
+Workspace and Inventory; sign in as its Owner and select the store in Workspace. Ensure
+Inventory is activated for that store. Under Membership, create a Staff invitation with
+Inventory access and copy the link immediately. Open it in a separate browser profile,
+sign up or sign in as the invited Auth0 test identity, verify its email with Auth0, and
+accept. Open Inventory from Workspace and verify read-only access. Repeat with another
+verified test email and the Admin role to test management access. In the Owner session,
+change the employee role, revoke Inventory access or deactivate the membership and verify
+the next request is denied. Do not use the same Auth0 account in both browser profiles.
+Auth0 development settings must permit the configured Workspace callback and origin;
+no new Auth0 application is required.
+
+Owner-only management endpoints are `GET /api/businesses/{id}/membership/members`,
+`GET|POST /api/businesses/{id}/membership/invitations`,
+`POST /api/businesses/{id}/membership/invitations/{invitationId}/revoke`, and
+`PATCH /api/businesses/{id}/membership/members/{userId}`. The authenticated recipient
+uses `POST /api/invitations/accept` with the token in the request body. All mutations
+require the existing session-bound CSRF token. Ordinary list responses contain no token.
